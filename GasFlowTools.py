@@ -18,7 +18,7 @@ def extract_tree(path,mcut,snapidxmin=0):
         os.remove('jobs/extract_tree.log')
 
     logging.basicConfig(filename='jobs/extract_tree.log', level=logging.INFO)
-    logging.info(f'Running tree extraction for haloes with mass above {mcut*10**10:.1e} after snapidx {snapidxmin} ...')
+    logging.info(f'Running tree extraction for haloes with mass above {mcut*10**10:.1e} after (and including) snapidx {snapidxmin} ...')
 
     # get file names
     tree_fnames=os.listdir(path)
@@ -28,7 +28,7 @@ def extract_tree(path,mcut,snapidxmin=0):
     # iterate through all tree files
     t0=time.time()
     for ifile,tree_fname in enumerate(tree_fnames):
-        print(f'Processing file {ifile+1} of {nfiles}')
+        logging.info(f'Processing file {ifile+1} of {nfiles}')
         treefile=h5py.File(f'{path}/{tree_fname}')
 
         #mass mask
