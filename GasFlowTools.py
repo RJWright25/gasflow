@@ -22,6 +22,7 @@ def extract_tree(path,mcut,snapidxmin=0):
 
     # get file names
     tree_fnames=os.listdir(path)
+    tree_fnames=[tree_fname for tree_fname in tree_fnames if 'tree' in tree_fname]
     nfiles=len(tree_fnames)
 
     # iterate through all tree files
