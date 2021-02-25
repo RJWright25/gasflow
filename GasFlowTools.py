@@ -7,17 +7,20 @@ import pandas as pd
 
 def extract_tree(path,mcut,snapidxmin=0):
 
-    outname='catalogue_tree.hdf5'
+    outname='catalogues/catalogue_tree.hdf5'
     fields=['snapshotNumber','fofIndex','hostIndex','nodeIndex','descendantIndex','mainProgenitorIndex']
     mcut=10**mcut/10**10 
 
-    if not os.path.exists('jobs'):
-        os.mkdir('jobs')
+    if not os.path.exists('logs'):
+        os.mkdir('logs')
+    
+    if not os.path.exists('catalogues'):
+        os.mkdir('catalogues')
     
     if os.path.exists('jobs/extract_tree.log'):
         os.remove('jobs/extract_tree.log')
 
-    logging.basicConfig(filename='jobs/extract_tree.log', level=logging.INFO)
+    logging.basicConfig(filename='logs/extract_tree.log', level=logging.INFO)
     logging.info(f'Running tree extraction for haloes with mass above {mcut*10**10:.1e} after (and including) snapidx {snapidxmin} ...')
 
     # get file names
