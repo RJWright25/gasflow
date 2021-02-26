@@ -233,18 +233,29 @@ def extract_subhalo(path,mcut,snapidxmin=0):
 
 
 
-# def extract_subs(path,mcut,snapidxmin=0):
+def match_subs(mcut,snapidxmin=0):
 
-#     outname='catalogues/catalogue_subhalo.hdf5'
-#     fields=['/Subhalo/GroupNumber',
-#             '/Subhalo/SubGroupNumber',
-#             '/Subhalo/MassType',
-#             '/Subhalo/ApertureMeasurements/Mass/030kpc',
-#             '/Subhalo/Vmax',
-#             '/Subhalo/CentreOfPotential',
-#             '/Subhalo/Velocity',
-#             '/Subhalo/CentreOfMass',
-#             '/Subhalo/HalfMassRad']
+    outname='catalogues/catalogue_subhalo.hdf5'
+    catalogue_subhalo=pd.read_hdf('catalogues/catalogue_subhalo.hdf5',key='Subhalo',mode='r')
+    catalogue_tree=pd.read_hdf('catalogues/catalogue_tree.hdf5',key='Tree',mode='r')
+
+
+    fields_tree=['snapshotNumber',
+                 'nodeIndex',
+                 'fofIndex',
+                 'hostIndex',
+                 'enclosingIndex',
+                 'isFoFCentre',
+                 'descendantIndex',
+                 'mainProgenitorIndex',
+                 'position',
+                 'positinInCatalogue']
+
+    snaps_subhalo=catalogue_subhalo['snapshotidx'].unique
+    print(snaps_subhalo)
+
+
+    
     
 
 
