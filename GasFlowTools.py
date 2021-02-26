@@ -13,7 +13,10 @@ def extract_tree(path,mcut,snapidxmin=0):
             'fofIndex',
             'hostIndex',
             'descendantIndex',
-            'mainProgenitorIndex']
+            'mainProgenitorIndex',
+            'enclosingIndex',
+            'isFoFCentre',
+            'positionInCatalogue']
 
     mcut=10**mcut/10**10 
 
@@ -226,8 +229,6 @@ def extract_subhalo(path,mcut,snapidxmin=0):
         os.remove(f'{outname}')
 
     data.to_hdf(f'{outname}',key='Subhalo')
-
-
 
 
 def match_tree(mcut,snapidxmin=0):
