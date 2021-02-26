@@ -89,20 +89,21 @@ def extract_fof(path,mcut,snapidxmin=0):
         os.remove('logs/extract_fof.log')
 
     logging.basicConfig(filename='logs/extract_fof.log', level=logging.INFO)
-    logging.info(f'Running fof extraction for FOFs with mass above {mcut*10**10:.1e} after (and including) snapidx {snapidxmin} ...')
+    logging.info(f'Running FOF extraction for FOFs with mass above {mcut*10**10:.1e} after (and including) snapidx {snapidxmin} ...')
 
     t0=time.time()
     ifile=0
-    for isnap,groupdir in enumerate(groupdirs):
+    isnap=-1
+    for groupdir in enumerate(groupdirs):
         snap=int(groupdir.split('snip_')[-1][:3])
         try:
             snapidx=redshift_table.loc[snap==redshift_table['snapshot'],'snapshotidx'].values[0]
         except:
             logging.info(f'Skipping snap {snapidx} (not in trees) [runtime {time.time()-t0:.2f} sec]')
-            isnap+=-1
             continue
 
         if snapidx>=snapidxmin:
+            isnap+=1
             logging.info(f'Processing snap {snapidx} ({isnap+1}/{len(groupdir)}) [runtime {time.time()-t0:.2f} sec]')
             groupdirfnames=os.listdir(groupdir)
             groupdirfnames=sorted([groupdir+'/'+groupdirfname for groupdirfname in groupdirfnames if groupdirfname.startswith('eagle_subfind')])
