@@ -251,7 +251,7 @@ def match_subs(mcut,snapidxmin=0):
                  'position',
                  'positinInCatalogue']
 
-    snaps_subhalo=catalogue_subhalo['snapshotidx'].unique
+    snaps_subhalo=catalogue_subhalo['snapshotidx'].unique()
     print(snaps_subhalo)
 
 
