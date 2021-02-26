@@ -140,6 +140,7 @@ def extract_fof(path,mcut,snapidxmin=0):
                         data=data.append(newdata,ignore_index=True)
 
                     ifile+=1
+                    groupdirifile.close()
         
     if os.path.exists(f'{outname}'):
         os.remove(f'{outname}')
@@ -222,6 +223,7 @@ def extract_subhalo(path,mcut,snapidxmin=0):
                         data=data.append(newdata,ignore_index=True)
 
                     ifile+=1
+                    groupdirifile.close()
         
     if os.path.exists(f'{outname}'):
         os.remove(f'{outname}')
