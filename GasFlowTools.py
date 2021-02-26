@@ -141,10 +141,10 @@ def extract_fof(path,mcut,snapidxmin=0):
 
                     ifile+=1
         
-    if os.path.exists(f'catalogues/{outname}'):
-        os.remove(f'catalogues/{outname}')
+    if os.path.exists(f'{outname}'):
+        os.remove(f'{outname}')
 
-    data.to_hdf(f'catalogues/{outname}',key='FOF')
+    data.to_hdf(f'{outname}',key='FOF')
 
 
 
