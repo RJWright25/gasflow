@@ -250,11 +250,19 @@ def match_subs(mcut,snapidxmin=0):
                  'position',
                  'positinInCatalogue']
 
-    snaps_subhalo=catalogue_subhalo['snapshotidx'].unique()
-    snaps_tomatch=snaps_subhalo[np.where(snaps_subhalo>=snapidxmin)]
-    print(snaps_tomatch)
+    snapidxs_subhalo=catalogue_subhalo['snapshotidx'].unique()
+    snapidxs_tomatch=snapidxs_subhalo[np.where(snapidxs_subhalo>=snapidxmin)]
 
-    
+    for snapidx in snapidxs_tomatch:
+        snap_subhalo_catalogue=catalogue_subhalo.loc[catalogue_subhalo['snapshotidx']==snapidx,:];nsub_snip=snap_subhalo_catalogue.shape[0]
+        snap_tree_catalogue=treecat.loc[catalogue_tree['snapshotNumber']==snapidx,:]
+        snap_tree_coms=snap_tree_catalogue.loc[:,[f'position_{x}' for x in 'xyz']].values
+
+        for isub,sub in snip_subcat.iterrows():
+            sub_com=[sub[f'CentreOfPotential_{x}'] for x in 'xyz']
+            treecat_match=np.sqrt(np.sum(np.square(snip_treecat_coms-sub_com),axis=1))==0
+            print(isub,np.sum(treecat_match))
+
     
 
 
