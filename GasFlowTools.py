@@ -256,11 +256,10 @@ def match_tree(mcut,snapidxmin=0):
 
     fields_tree_index=[]
     catalogue_columns=list(catalogue_subhalo.columns)
-    print(catalogue_columns)
     for field in fields_tree:
-        print(field)
-        fieldidx=np.where(field==catalogue_columns)[0][0]
-        fields_tree_index.append(fieldidx)
+        for ifield,catfield in enumerate(catalogue_columns):
+            if field==catfield:
+                fields_tree_index.append(fieldidx)
 
     snapidxs_subhalo=catalogue_subhalo['snapshotidx'].unique()
     snapidxs_tomatch=snapidxs_subhalo[np.where(snapidxs_subhalo>=snapidxmin)]
