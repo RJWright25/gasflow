@@ -109,6 +109,7 @@ def extract_fof(path,mcut,snapidxmin=0):
                 logging.info(f'Snap {snapidx}, file {ifile_snap}/{groupdirfnames_n}: extracting data for {ifile_nfof:.0f} FOFs [runtime {time.time()-t0:.2f} sec]')
                 
                 newdata=pd.DataFrame(groupdirifile['/FOF/GroupMass'][ifile_mask],columns=['GroupMass'])
+                print(snapidx)
                 newdata.loc[:,'snapshotidx']=snapidx
 
                 for field in fields:
