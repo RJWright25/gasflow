@@ -255,7 +255,7 @@ def match_subs(mcut,snapidxmin=0):
 
     for snapidx in snapidxs_tomatch:
         snap_subhalo_catalogue=catalogue_subhalo.loc[catalogue_subhalo['snapshotidx']==snapidx,:];nsub_snip=snap_subhalo_catalogue.shape[0]
-        snap_tree_catalogue=treecat.loc[catalogue_tree['snapshotNumber']==snapidx,:]
+        snap_tree_catalogue=catalogue_tree.loc[catalogue_tree['snapshotNumber']==snapidx,:]
         snap_tree_coms=snap_tree_catalogue.loc[:,[f'position_{x}' for x in 'xyz']].values
 
         for isub,sub in snip_subcat.iterrows():
