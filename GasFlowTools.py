@@ -260,9 +260,10 @@ def match_subs(mcut,snapidxmin=0):
 
         for isub,sub in snap_subhalo_catalogue.iterrows():
             sub_com=[sub[f'CentreOfPotential_{x}'] for x in 'xyz']
-            treecat_match=np.sqrt(np.sum(np.square(snap_tree_coms-sub_com),axis=1))==0
-            if np.sum(treecat_match)==0:
-                print(isub,'no match :(')
+            print(np.sqrt(np.sum(np.square(snap_tree_coms-sub_com),axis=1)))
+            # treecat_match=np.sqrt(np.sum(np.square(snap_tree_coms-sub_com),axis=1))==0
+            # if np.sum(treecat_match)==0:
+            #     print(isub,'no match :(')
 
     
 
