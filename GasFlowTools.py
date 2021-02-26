@@ -260,7 +260,7 @@ def match_tree(mcut,snapidxmin=0):
     for isnap,snapidx in enumerate(snapidxs_tomatch):
         logging.info(f'Processing snap {snapidx} ({isnap+1}/{len(snapidxs_tomatch)}) [runtime {time.time()-t0:.2f} sec]')
 
-        snap_subhalo_catalogue=catalogue_subhalo.loc[catalogue_subhalo['snapshotidx']==snapidx,:]
+        snap_subhalo_catalogue=catalogue_subhalo.loc[np.logical_and(catalogue_subhalo['snapshotidx']==snapidx,catalogue_subhalo['Mass']>mcut),:]
         snap_tree_catalogue=catalogue_tree.loc[catalogue_tree['snapshotNumber']==snapidx,:]
         snap_tree_coms=snap_tree_catalogue.loc[:,[f'position_{x}' for x in 'xyz']].values
 
