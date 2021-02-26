@@ -242,6 +242,7 @@ def match_tree(mcut,snapidxmin=0):
                  'descendantIndex',
                  'mainProgenitorIndex']
 
+
     mcut=10**mcut/10**10
 
     if os.path.exists('logs/match_tree.log'):
@@ -252,6 +253,12 @@ def match_tree(mcut,snapidxmin=0):
 
     for field in fields_tree:
         catalogue_subhalo.loc[:,field]=-1
+
+    fields_tree_index=[]
+    catalogue_columns=list(catalogue_subhalo.columns)
+    for field in fields_tree:
+        fieldidx=np.where(field==catalogue_columns)[0][0]
+        fields_tree_index.append(fieldidx)
 
     snapidxs_subhalo=catalogue_subhalo['snapshotidx'].unique()
     snapidxs_tomatch=snapidxs_subhalo[np.where(snapidxs_subhalo>=snapidxmin)]
@@ -274,7 +281,7 @@ def match_tree(mcut,snapidxmin=0):
                 print(f'getting tree data = {time.time()-t0halo:.2f}')
                 isub_treedata=snap_tree_catalogue.loc[isub_match,fields_tree]
                 print(f'putting tree data in array = {time.time()-t0halo:.2f}')
-                catalogue_subhalo.loc[catalogue_subhalo.index==isub,fields_tree]=(isub_treedata.values).astype(int)
+                catalogue_subhalo.iloc[isub,fields_tree_index]=(isub_treedata.values).astype(int)
             else:
                 logging.info(f'Warning: could not match subhalo {iisub} at ({isub_com[0]:.2f},{isub_com[1]:.2f},{isub_com[2]:.2f}) cMpc')
                 pass
