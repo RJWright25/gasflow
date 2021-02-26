@@ -104,7 +104,7 @@ def extract_fof(path,mcut,snapidxmin=0):
 
         if snapidx>=snapidxmin:
             isnap+=1
-            logging.info(f'Processing snap {snapidx} ({isnap+1}/{len(groupdir)}) [runtime {time.time()-t0:.2f} sec]')
+            logging.info(f'Processing snap {snapidx} ({isnap+1}/{len(groupdir)} total) [runtime {time.time()-t0:.2f} sec]')
             groupdirfnames=os.listdir(groupdir)
             groupdirfnames=sorted([groupdir+'/'+groupdirfname for groupdirfname in groupdirfnames if groupdirfname.startswith('eagle_subfind')])
             groupdirfnames_n=len(groupdirfnames)
@@ -116,7 +116,7 @@ def extract_fof(path,mcut,snapidxmin=0):
                 ifile_mask=ifile_fofmasses>mcut
                 ifile_nfof=np.sum(ifile_mask)
     
-                logging.info(f'Snap {snapidx} ({isnap+1}/{len(groupdir)}), file {ifile_snap+1}/{groupdirfnames_n}: extracting data for {ifile_nfof:.0f} FOFs [runtime {time.time()-t0:.2f} sec]')
+                logging.info(f'Snap {snapidx} ({isnap+1}/{len(groupdir)} total), file {ifile_snap+1}/{groupdirfnames_n}: extracting data for {ifile_nfof:.0f} FOFs [runtime {time.time()-t0:.2f} sec]')
                 
                 if ifile_nfof:
                     newdata=pd.DataFrame(groupdirifile['/FOF/GroupMass'][ifile_mask],columns=['GroupMass'])
