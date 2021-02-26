@@ -265,15 +265,20 @@ def match_tree(mcut,snapidxmin=0):
         snap_tree_coms=snap_tree_catalogue.loc[:,[f'position_{x}' for x in 'xyz']].values
 
         iisub=0;nsub_snap=snap_subhalo_catalogue.shape[0]
+        t0halo=time.time()
         for isub,sub in snap_subhalo_catalogue.iterrows():
             isub_com=[sub[f'CentreOfPotential_{x}'] for x in 'xyz']
+            print(f'finding match t = {time.time()-t0halo:.2f}')
             isub_match=np.sqrt(np.sum(np.square(snap_tree_coms-isub_com),axis=1))==0
             if np.sum(isub_match):
+                print(f'getting tree data = {time.time()-t0halo:.2f}')
                 isub_treedata=snap_tree_catalogue.loc[isub_match,fields_tree]
+                print(f'putting tree data in array = {time.time()-t0halo:.2f}')
                 catalogue_subhalo.loc[catalogue_subhalo.index==isub,fields_tree]=(isub_treedata.values).astype(int)
             else:
-                logging.info(f'warning: could not match subhalo {iisub} at ({isub_com[0]:.2f},{isub_com[1]:.2f},{isub_com[2]:.2f}) cMpc')
+                logging.info(f'Warning: could not match subhalo {iisub} at ({isub_com[0]:.2f},{isub_com[1]:.2f},{isub_com[2]:.2f}) cMpc')
                 pass
+            print(f'done with subhalo t = {time.time()-t0halo:.2f}')
 
             if not iisub%100:
                 logging.info(f'Done matching {(iisub+1)/nsub_snap*100:.1f}% of subhaloes at snap {snapidx} ({isnap+1}/{len(snapidxs_tomatch)}) [runtime {time.time()-t0:.2f} sec]')
