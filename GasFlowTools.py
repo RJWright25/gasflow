@@ -12,11 +12,8 @@ def extract_tree(path,mcut,snapidxmin=0):
             'nodeIndex',
             'fofIndex',
             'hostIndex',
-            'enclosingIndex',
-            'isFoFCentre',
             'descendantIndex',
-            'mainProgenitorIndex',
-            'positionInCatalogue']
+            'mainProgenitorIndex']
 
     mcut=10**mcut/10**10 
 
@@ -276,15 +273,12 @@ def match_tree(mcut,snapidxmin=0):
         iisub=0;nsub_snap=snap_subhalo_catalogue.shape[0]
         for isub,sub in snap_subhalo_catalogue.iterrows():
             isub_com=[sub[f'CentreOfPotential_{x}'] for x in 'xyz']
-            print(snap_tree_coms)
-            print(isub_com)
             isub_match=np.sqrt(np.sum(np.square(snap_tree_coms-isub_com),axis=1))==0
             if np.sum(isub_match):
                 isub_treedata=snap_tree_catalogue.loc[isub_match,fields_tree]
                 catalogue_subhalo.loc[catalogue_subhalo.index==isub,fields_tree]=isub_treedata.values
             else:
-                print(f'Couldnt match {iisub}')
-                print(sub)
+                pass
 
             if not iisub%100:
                 logging.info(f'Done matching {(iisub+1)/nsub_snap*100:.1f}% of subhaloes at snap {snapidx} ({isnap+1}/{len(snapidxs_tomatch)}) [runtime {time.time()-t0:.2f} sec]')
