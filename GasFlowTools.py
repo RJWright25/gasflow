@@ -96,7 +96,7 @@ def extract_fof(path,mcut,snapidxmin=0):
         snap=int(groupdir.split('snip_')[-1][:3])
         snapidx=redshift_table.loc[snap==redshift_table['snapshot'],'snapshotidx'].values[0]
         if snapidx>=snapidxmin:
-            logging.info(f'Processing snap {snapidx} [runtime {time.time()-t0:.2f} sec]')
+            logging.info(f'Processing snap {snapidx}/{len(groupdir)} [runtime {time.time()-t0:.2f} sec]')
             groupdirfnames=os.listdir(groupdir)
             groupdirfnames=sorted([groupdir+'/'+groupdirfname for groupdirfname in groupdirfnames if groupdirfname.startswith('eagle_subfind')])
             groupdirfnames_n=len(groupdirfnames)
