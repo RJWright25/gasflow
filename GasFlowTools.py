@@ -260,7 +260,7 @@ def match_subs(mcut,snapidxmin=0):
 
         for isub,sub in snip_subcat.iterrows():
             sub_com=[sub[f'CentreOfPotential_{x}'] for x in 'xyz']
-            treecat_match=np.sqrt(np.sum(np.square(snip_treecat_coms-sub_com),axis=1))==0
+            treecat_match=np.sqrt(np.sum(np.square(snap_tree_catalogue-sub_com),axis=1))==0
             print(isub,np.sum(treecat_match))
 
     
