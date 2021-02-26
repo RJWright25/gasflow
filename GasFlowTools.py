@@ -85,6 +85,9 @@ def extract_fof(path,mcut,snapidxmin=0):
     groupdirs=os.listdir(path)
     groupdirs=sorted([path+'/'+groupdir for groupdir in groupdirs if ('groups_snip' in groupdir and 'tar' not in groupdir)])
 
+    if os.path.exists('logs/extract_fof.log'):
+        os.remove('logs/extract_fof.log')
+
     logging.basicConfig(filename='logs/extract_fof.log', level=logging.INFO)
     logging.info(f'Running fof extraction for FOFs with mass above {mcut*10**10:.1e} after (and including) snapidx {snapidxmin} ...')
 
@@ -92,7 +95,6 @@ def extract_fof(path,mcut,snapidxmin=0):
     for isnap,groupdir in enumerate(groupdirs):
         snap=int(groupdir.split('snip_')[-1][:3])
         snapidx=redshift_table.loc[snap==redshift_table['snapshot'],'snapshotidx'].values[0]
-        print(snap,snapidx)
         if snapidx>=snapidxmin:
             logging.info(f'Processing snap {snapidx} [runtime {time.time()-t0:.2f} sec]')
             groupdirfnames=os.listdir(groupdir)
