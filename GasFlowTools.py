@@ -92,12 +92,14 @@ def extract_fof(path,mcut,snapidxmin=0):
     logging.info(f'Running fof extraction for FOFs with mass above {mcut*10**10:.1e} after (and including) snapidx {snapidxmin} ...')
 
     t0=time.time()
+    ifile=0
     for isnap,groupdir in enumerate(groupdirs):
         snap=int(groupdir.split('snip_')[-1][:3])
         try:
             snapidx=redshift_table.loc[snap==redshift_table['snapshot'],'snapshotidx'].values[0]
         except:
             logging.info(f'Skipping snap {snapidx} (not in trees) [runtime {time.time()-t0:.2f} sec]')
+            isnap+=-1
             continue
 
         if snapidx>=snapidxmin:
@@ -131,10 +133,12 @@ def extract_fof(path,mcut,snapidxmin=0):
                         else:
                             newdata.loc[:,field.split('FOF/')[-1]]=groupdirifile[field][ifile_mask]
 
-                    if isnap==0 and ifile_snap==0:
+                    if ifile==0:
                         data=newdata
                     else:
                         data=data.append(newdata,ignore_index=True)
+
+                    ifile+=1
         
     if os.path.exists(f'catalogues/{outname}'):
         os.remove(f'catalogues/{outname}')
