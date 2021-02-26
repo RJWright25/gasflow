@@ -238,13 +238,6 @@ def match_tree(mcut,snapidxmin=0):
     outname='catalogues/catalogue_subhalo.hdf5'
     catalogue_subhalo=pd.read_hdf('catalogues/catalogue_subhalo.hdf5',key='Subhalo',mode='r')
     catalogue_tree=pd.read_hdf('catalogues/catalogue_tree.hdf5',key='Tree',mode='r')
-
-    if os.path.exists('logs/match_tree.log'):
-        os.remove('logs/match_tree.log')
-
-    logging.basicConfig(filename='logs/match_tree.log', level=logging.INFO)
-    logging.info(f'Running tree matching for subhaloes with mass above {mcut*10**10:.1e} after (and including) snapidx {snapidxmin} ...')
-
     fields_tree=['snapshotNumber',
                  'nodeIndex',
                  'fofIndex',
@@ -255,6 +248,15 @@ def match_tree(mcut,snapidxmin=0):
                  'mainProgenitorIndex',
                  'position',
                  'positinInCatalogue']
+    mcut=10**mcut/10**10
+
+    if os.path.exists('logs/match_tree.log'):
+        os.remove('logs/match_tree.log')
+
+    logging.basicConfig(filename='logs/match_tree.log', level=logging.INFO)
+    logging.info(f'Running tree matching for subhaloes with mass above {mcut*10**10:.1e} after (and including) snapidx {snapidxmin} ...')
+
+
 
     for field in fields_tree:
         catalogue_subhalo.loc[:,field]=np.nan
@@ -264,7 +266,7 @@ def match_tree(mcut,snapidxmin=0):
 
     t0=time.time()
     for isnap,snapidx in enumerate(snapidxs_tomatch):
-        logging.info(f'Processing snap {snapidx} ({isnap+1/len(snapidxs_tomatch)}) [runtime {time.time()-t0:.2f} sec]')
+        logging.info(f'Processing snap {snapidx} ({isnap+1}/{len(snapidxs_tomatch)}) [runtime {time.time()-t0:.2f} sec]')
 
         snap_subhalo_catalogue=catalogue_subhalo.loc[catalogue_subhalo['snapshotidx']==snapidx,:]
         snap_tree_catalogue=catalogue_tree.loc[catalogue_tree['snapshotNumber']==snapidx,:]
@@ -273,6 +275,8 @@ def match_tree(mcut,snapidxmin=0):
         iisub=0;nsub_snap=snap_subhalo_catalogue.shape[0]
         for isub,sub in snap_subhalo_catalogue.iterrows():
             isub_com=[sub[f'CentreOfPotential_{x}'] for x in 'xyz']
+            print(snap_tree_coms)
+            print(isub_com)
             isub_match=np.sqrt(np.sum(np.square(snap_tree_coms-isub_com),axis=1))==0
             if np.sum(isub_match):
                 isub_treedata=snap_tree_catalogue.loc[isub_match,fields_tree]
@@ -282,7 +286,7 @@ def match_tree(mcut,snapidxmin=0):
                 print(sub)
 
             if not iisub%100:
-                logging.info(f'Done matching {(iisub+1)/nsub_snap*100:.1f}% of subhaloes at snap {snapidx} ({isnap+1/len(snapidxs_tomatch)}) [runtime {time.time()-t0:.2f} sec]')
+                logging.info(f'Done matching {(iisub+1)/nsub_snap*100:.1f}% of subhaloes at snap {snapidx} ({isnap+1}/{len(snapidxs_tomatch)}) [runtime {time.time()-t0:.2f} sec]')
 
             iisub+=1
 
