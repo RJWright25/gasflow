@@ -278,7 +278,8 @@ def match_tree(mcut,snapidxmin=0):
                 print(f'getting tree data = {time.time()-t0halo:.2f}')
                 isub_treedata=snap_tree_catalogue.loc[isub_match,fields_tree]
                 print(f'putting tree data in array = {time.time()-t0halo:.2f}')
-                catalogue_subhalo.loc[isub_mask,fields_tree]=isub_treedata.values
+                for ifield,field in enumerate(fields_tree[::-1]):
+                    catalogue_subhalo.iloc[isub,-ifield-1]=isub_treedata.values
             else:
                 logging.info(f'Warning: could not match subhalo {iisub} at ({isub_com[0]:.2f},{isub_com[1]:.2f},{isub_com[2]:.2f}) cMpc')
                 pass
