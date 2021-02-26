@@ -120,8 +120,8 @@ def extract_fof(path,mcut,snapidxmin=0):
                             else:
                                 if icol in [0,1,4,5]:
                                     newdata.loc[:,field.split('FOF/')[-1]+f'_{icol}']=groupdirifile[field][ifile_mask,icol]
-                else:
-                    newdata.loc[:,field.split('FOF/')[-1]]=groupdirifile[field][ifile_mask]
+                    else:
+                        newdata.loc[:,field.split('FOF/')[-1]]=groupdirifile[field][ifile_mask]
 
             if isnap==0 and ifile_snap==0:
                 data=newdata
