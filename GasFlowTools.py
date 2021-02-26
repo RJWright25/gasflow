@@ -91,12 +91,7 @@ def extract_fof(path,mcut,snapidxmin=0):
     t0=time.time()
     for isnap,groupdir in enumerate(groupdirs):
         snap=int(groupdir.split('snip_')[-1][:3])
-        print(redshift_table['snapshot'])
-        print(snap)
-        snapidx=redshift_table.loc[snap==redshift_table['snapshot'],'snapshotidx'].values
-        print(snapidx)
-
-        
+        snapidx=redshift_table.loc[snap==redshift_table['snapshot'],'snapshotidx'].values[0]
         
         if snapidx>=snapidxmin:
             logging.info(f'Processing snap {snapidx} [runtime {time.time()-t0:.2f} sec]')
