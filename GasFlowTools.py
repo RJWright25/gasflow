@@ -94,7 +94,7 @@ def extract_fof(path,mcut,snapidxmin=0):
     t0=time.time()
     ifile=0
     isnap=-1
-    for groupdir in enumerate(groupdirs):
+    for groupdir in groupdirs:
         snap=int(groupdir.split('snip_')[-1][:3])
         try:
             snapidx=redshift_table.loc[snap==redshift_table['snapshot'],'snapshotidx'].values[0]
