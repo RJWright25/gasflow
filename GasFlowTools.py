@@ -238,6 +238,7 @@ def match_tree(mcut,snapidxmin=0):
     outname='catalogues/catalogue_subhalo.hdf5'
     catalogue_subhalo=pd.read_hdf('catalogues/catalogue_subhalo.hdf5',key='Subhalo',mode='r')
     catalogue_tree=pd.read_hdf('catalogues/catalogue_tree.hdf5',key='Tree',mode='r')
+    print(catalogue_tree)
     fields_tree=['snapshotNumber',
                  'nodeIndex',
                  'fofIndex',
