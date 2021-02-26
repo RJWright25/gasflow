@@ -256,6 +256,7 @@ def match_tree(mcut,snapidxmin=0):
 
     fields_tree_index=[]
     catalogue_columns=list(catalogue_subhalo.columns)
+    print(catalogue_columns)
     for field in fields_tree:
         fieldidx=np.where(field==catalogue_columns)[0][0]
         fields_tree_index.append(fieldidx)
