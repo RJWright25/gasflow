@@ -235,8 +235,7 @@ def match_tree(mcut,snapidxmin=0):
     outname='catalogues/catalogue_subhalo.hdf5'
     catalogue_subhalo=pd.read_hdf('catalogues/catalogue_subhalo.hdf5',key='Subhalo',mode='r')
     catalogue_tree=pd.read_hdf('catalogues/catalogue_tree.hdf5',key='Tree',mode='r')
-    fields_tree=['snapshotNumber',
-                 'nodeIndex',
+    fields_tree=['nodeIndex',
                  'fofIndex',
                  'hostIndex',
                  'descendantIndex',
@@ -251,7 +250,7 @@ def match_tree(mcut,snapidxmin=0):
     logging.info(f'Running tree matching for subhaloes with mass above {mcut*10**10:.1e} after (and including) snapidx {snapidxmin} ...')
 
     for field in fields_tree:
-        catalogue_subhalo.loc[:,field]=np.nan
+        catalogue_subhalo.loc[:,field]=-1
 
     snapidxs_subhalo=catalogue_subhalo['snapshotidx'].unique()
     snapidxs_tomatch=snapidxs_subhalo[np.where(snapidxs_subhalo>=snapidxmin)]
@@ -270,7 +269,7 @@ def match_tree(mcut,snapidxmin=0):
             isub_match=np.sqrt(np.sum(np.square(snap_tree_coms-isub_com),axis=1))==0
             if np.sum(isub_match):
                 isub_treedata=snap_tree_catalogue.loc[isub_match,fields_tree]
-                catalogue_subhalo.loc[catalogue_subhalo.index==isub,fields_tree]=isub_treedata.values
+                catalogue_subhalo.loc[catalogue_subhalo.index==isub,fields_tree]=(isub_treedata.values).astype(int)
             else:
                 logging.info(f'warning: could not match subhalo {iisub} at ({isub_com[0]:.2f},{isub_com[1]:.2f},{isub_com[2]:.2f}) cMpc')
                 pass
