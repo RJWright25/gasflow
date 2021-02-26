@@ -77,6 +77,7 @@ def extract_fofs(path,mcut,isnip=True,snapidxmin=0):
             '/FOF/Group_R_Crit200',
             '/FOF/NumOfSubhalos',
             '/FOF/GroupCentreOfPotential']
+            
     mcut=10**mcut/10**10 
     redshift_table=pd.read_hdf('snipshot_redshifts.hdf5',key='snipshots')
     snapshots_valid=redshift_table.loc[redshift_table['snapshotidx']>=0,'snapshot'].values
