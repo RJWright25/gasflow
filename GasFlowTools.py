@@ -235,17 +235,13 @@ def match_tree(mcut,snapidxmin=0):
     outname='catalogues/catalogue_subhalo.hdf5'
     catalogue_subhalo=pd.read_hdf('catalogues/catalogue_subhalo.hdf5',key='Subhalo',mode='r')
     catalogue_tree=pd.read_hdf('catalogues/catalogue_tree.hdf5',key='Tree',mode='r')
-    print(catalogue_tree)
     fields_tree=['snapshotNumber',
                  'nodeIndex',
                  'fofIndex',
                  'hostIndex',
-                 'enclosingIndex',
-                 'isFoFCentre',
                  'descendantIndex',
-                 'mainProgenitorIndex',
-                 'position',
-                 'positinInCatalogue']
+                 'mainProgenitorIndex']
+
     mcut=10**mcut/10**10
 
     if os.path.exists('logs/match_tree.log'):
@@ -253,8 +249,6 @@ def match_tree(mcut,snapidxmin=0):
 
     logging.basicConfig(filename='logs/match_tree.log', level=logging.INFO)
     logging.info(f'Running tree matching for subhaloes with mass above {mcut*10**10:.1e} after (and including) snapidx {snapidxmin} ...')
-
-
 
     for field in fields_tree:
         catalogue_subhalo.loc[:,field]=np.nan
