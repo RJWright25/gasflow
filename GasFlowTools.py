@@ -272,6 +272,7 @@ def match_tree(mcut,snapidxmin=0):
                 isub_treedata=snap_tree_catalogue.loc[isub_match,fields_tree]
                 catalogue_subhalo.loc[catalogue_subhalo.index==isub,fields_tree]=isub_treedata.values
             else:
+                logging.info(f'warning: could not match subhalo {iisub} at ({isub_com[0]:.2f},{isub_com[1]:.2f},{isub_com[2]:.2f}) cMpc')
                 pass
 
             if not iisub%100:
