@@ -96,7 +96,7 @@ def extract_fof(path,mcut,snapidxmin=0):
         snap=int(groupdir.split('snip_')[-1][:3])
         snapidx=redshift_table.loc[snap==redshift_table['snapshot'],'snapshotidx'].values[0]
         if snapidx>=snapidxmin:
-            logging.info(f'Processing snap {snapidx}/{len(groupdir)} [runtime {time.time()-t0:.2f} sec]')
+            logging.info(f'Processing snap {snapidx+1}/{len(groupdir)} [runtime {time.time()-t0:.2f} sec]')
             groupdirfnames=os.listdir(groupdir)
             groupdirfnames=sorted([groupdir+'/'+groupdirfname for groupdirfname in groupdirfnames if groupdirfname.startswith('eagle_subfind')])
             groupdirfnames_n=len(groupdirfnames)
@@ -108,7 +108,7 @@ def extract_fof(path,mcut,snapidxmin=0):
                 ifile_mask=ifile_fofmasses>mcut
                 ifile_nfof=np.sum(ifile_mask)
     
-                logging.info(f'Snap {snapidx}, file {ifile_snap}/{groupdirfnames_n}: extracting data for {ifile_nfof:.0f} FOFs [runtime {time.time()-t0:.2f} sec]')
+                logging.info(f'Snap {snapidx}, file {ifile_snap+1}/{groupdirfnames_n}: extracting data for {ifile_nfof:.0f} FOFs [runtime {time.time()-t0:.2f} sec]')
                 
                 if ifile_nfof:
                     newdata=pd.DataFrame(groupdirifile['/FOF/GroupMass'][ifile_mask],columns=['GroupMass'])
