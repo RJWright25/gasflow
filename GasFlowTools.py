@@ -79,7 +79,7 @@ def extract_fof(path,mcut,snapidxmin=0):
             '/FOF/GroupCentreOfPotential']
 
     mcut=10**mcut/10**10 
-    redshift_table=pd.read_hdf('snapshot_redshifts.hdf5',key='snipshots')
+    redshift_table=pd.read_hdf('snapshot_redshifts.hdf5',key='snapshots')
     dims='xyz'
 
     groupdirs=os.listdir(path)
