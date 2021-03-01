@@ -5,7 +5,7 @@ import h5py
 import numpy as np
 import pandas as pd
 
-def submit_function(function,arguments,memory,time)
+def submit_function(function,arguments,memory,time):
     filename=sys.argv[0]
     cwd=os.getcwd()
     run=cwd.split('/')[-1]
@@ -335,6 +335,7 @@ def match_tree(mcut,snapidxmin=0):
         
         catalogue_subhalo.loc[np.logical_and(catalogue_subhalo['snapshotidx']==snapidx,catalogue_subhalo['Mass']>mcut),:]=snap_subhalo_catalogue
         print(catalogue_subhalo)
+
     os.remove(outname)
     catalogue_subhalo.to_hdf(outname,key='Subhalo')
 
