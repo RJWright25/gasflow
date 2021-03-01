@@ -5,6 +5,54 @@ import h5py
 import numpy as np
 import pandas as pd
 
+def submit_function(function,arguments,memory,time)
+    filename=sys.argv[0]
+    cwd=os.getcwd()
+    run=cwd.split('/')[-1]
+
+    if not os.path.exists('jobs'):
+        os.mkdir('jobs')
+    if not os.path.exists('logs'):
+        os.mkdir('logs')
+
+    jobname=function+'_'+run
+    runscriptfilepath=f'{cwd}/jobs/{jobname}-run.py'
+    jobscriptfilepath=f'{cwd}/jobs/{jobname}-submit.slurm'
+    if os.path.exists(jobscriptfilepath):
+        os.remove(runscriptfilepath)
+    if os.path.exists(jobscriptfilepath):
+        os.remove(jobscriptfilepath)
+
+    argumentstring=''
+    for arg in arguments:
+        argumentstring+=f'{arg}={arguments[arg]},'
+
+    with open(runscriptfilepath,"w") as runfile:
+        runfile.writelines(f"import sys\n")
+        runfile.writelines(f"sys.path.append('home/rwright/Software/gasflow')\n")
+        runfile.writelines(f"from GasFlowTools import *\n")
+        runfile.writelines(f"{function}({argumentstring})")
+    runfile.close()
+
+    with open(jobscriptfilepath,"w") as jobfile:
+        jobfile.writelines(f"#!/bin/sh\n")
+        jobfile.writelines(f"#SBATCH --job-name={jobname}\n")
+        jobfile.writelines(f"#SBATCH --nodes=1\n")
+        jobfile.writelines(f"#SBATCH --ntasks-per-node={1}\n")
+        jobfile.writelines(f"#SBATCH --mem={memory}GB\n")
+        jobfile.writelines(f"#SBATCH --time={time}\n")
+        jobfile.writelines(f"#SBATCH --output=jobs/{jobname}.out\n")
+        jobfile.writelines(f" \n")
+        jobfile.writelines(f"echo JOB START TIME\n")
+        jobfile.writelines(f"date\n")
+        jobfile.writelines(f"echo CPU DETAILS\n")
+        jobfile.writelines(f"lscpu\n")
+        jobfile.writelines(f"python {runscriptfilepath} \n")
+        jobfile.writelines(f"echo JOB END TIME\n")
+        jobfile.writelines(f"date\n")
+    jobfile.close()
+    os.system(f"sbatch {jobscriptfilepath}")
+
 def extract_tree(path,mcut,snapidxmin=0):
 
     outname='catalogues/catalogue_tree.hdf5'
