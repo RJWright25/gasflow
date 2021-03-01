@@ -30,7 +30,7 @@ def submit_function(function,arguments,memory,time):
 
     with open(runscriptfilepath,"w") as runfile:
         runfile.writelines(f"import sys\n")
-        runfile.writelines(f"sys.path.append('home/rwright/Software/gasflow')\n")
+        runfile.writelines(f"sys.path.append('/home/rwright/Software/gasflow')\n")
         runfile.writelines(f"from GasFlowTools import *\n")
         runfile.writelines(f"{function}({argumentstring})")
     runfile.close()
