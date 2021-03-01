@@ -33,6 +33,8 @@ def submit_function(function,arguments,memory,time):
 
 
     with open(runscriptfilepath,"w") as runfile:
+        runfile.writelines(f"import warnings\n")
+        runfile.writelines(f"warnings.filterwarnings('ignore')\n")
         runfile.writelines(f"import sys\n")
         runfile.writelines(f"sys.path.append('/home/rwright/Software/gasflow')\n")
         runfile.writelines(f"from GasFlowTools import *\n")
@@ -48,6 +50,8 @@ def submit_function(function,arguments,memory,time):
         jobfile.writelines(f"#SBATCH --time={time}\n")
         jobfile.writelines(f"#SBATCH --output=jobs/{jobname}.out\n")
         jobfile.writelines(f" \n")
+        jobfile.writelines(f"OMPI_MCA_mpi_warn_on_fork=0\n")
+        jobfile.writelines(f"export OMPI_MCA_mpi_warn_on_fork\n")
         jobfile.writelines(f"echo JOB START TIME\n")
         jobfile.writelines(f"date\n")
         jobfile.writelines(f"echo CPU DETAILS\n")
