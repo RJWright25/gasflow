@@ -26,7 +26,11 @@ def submit_function(function,arguments,memory,time):
 
     argumentstring=''
     for arg in arguments:
-        argumentstring+=f'{arg}={arguments[arg]},'
+        if type(arguments[arg])==str:
+            argumentstring+=f"{arg}='{arguments[arg]}',"
+        else:
+            argumentstring+=f"{arg}={arguments[arg]},"
+
 
     with open(runscriptfilepath,"w") as runfile:
         runfile.writelines(f"import sys\n")
