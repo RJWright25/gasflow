@@ -386,14 +386,14 @@ def match_fof(mcut,snapidxmin=0):
         fofcat_snap=catalogue_fof.loc[catalogue_fof['snapshotidx']==snapidx,:]
         fofcat_coms=catalogue_fof.loc[catalogue_fof['snapshotidx']==snapidx,[f"GroupCentreOfPotential_{x}" for x in 'xyz']].values
         for icentral,(icentralidx,icentral_data) in enumerate(central_data.iterrows()):
-            if icentral%1000==0:
+            if icentral%1==0:
                 logging.info(f'Processing group {icentral+1} of {np.sum(central_mask)} at snipshot {snapidx}')
             groupnum=int(icentral_data['GroupNumber'])
             fofmatch=np.sqrt(np.sum(np.square(fofcat_coms-[icentral_data[f"CentreOfPotential_{x}"] for x in 'xyz']),axis=1))<=0.001
             ifofmatch_data=fofcat_snap.loc[fofmatch,fields_fof].values
             ifofsubhaloes=np.logical_and(catalogue_subhalo['GroupNumber']==groupnum,snap_mask)
             if np.sum(fofmatch)>0:
-                catalogue_subhalo.loc[ifofsubhaloes,fields_fof]=ifofmatch_data
+                catalogue_subhalo.loc[ifofsubhaloes,fields_fof]= np.rowstack([ifofmatch_data]*int(np.sum(ifofsubhaloes)))
             else:
                 logging.info(f'Warning: no matching group for central {icentral}')
 
