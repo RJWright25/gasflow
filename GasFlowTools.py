@@ -245,7 +245,7 @@ def extract_subhalo(path,mcut,snapidxmin=0,overwrite=True):
 
         if snapidx>=snapidxmin:
             isnap+=1
-            logging.info(f'Processing snap {snapidx} ({isnap+1}/{len(groupdir)} total) [runtime {time.time()-t0:.2f} sec]')
+            logging.info(f'Processing snap {snapidx} ({isnap+1}/{len(groupdirs)} total) [runtime {time.time()-t0:.2f} sec]')
             groupdirfnames=os.listdir(groupdir)
             groupdirfnames=sorted([groupdir+'/'+groupdirfname for groupdirfname in groupdirfnames if groupdirfname.startswith('eagle_subfind')])
             groupdirfnames_n=len(groupdirfnames)
