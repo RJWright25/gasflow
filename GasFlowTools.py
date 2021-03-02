@@ -377,30 +377,25 @@ def match_fof(mcut,snapidxmin=0):
     t0=time.time()
     for isnap,snapidx in enumerate(snapidxs_tomatch):
         logging.info(f'Processing snap {snapidx} ({isnap+1}/{len(snapidxs_tomatch)}) [runtime {time.time()-t0:.2f} sec]')
+        snap_mask=catalogue_subhalo['snapshotidx']==snapidx
+        central_mask=np.logical_and.reduce([catalogue_subhalo['snipshotidx']==snapidx,catalogue_subhalo['SubGroupNumber']==0,catalogue_subhalo['Mass']>mcut])
 
-        snap_subhalo_catalogue=catalogue_subhalo.loc[np.logical_and(catalogue_subhalo['snapshotidx']==snapidx,catalogue_subhalo['Mass']>mcut),:]
-        snap_fof_catalogue=catalogue_fof.loc[catalogue_fof['snapshotidx']==snapidx,:]
-        snap_fof_coms=snap_fof_catalogue.loc[:,[f'GroupCentreOfPotential_{x}' for x in 'xyz']].values
+        logging.info(f'Matching for {np.sum(central_mask)} groups with centrals above {mcut*10**10:.1e}msun at snipshot {snapidx} [runtime {time.time()-t0:.2f} sec]')
+        central_data=catalogue_subhalo.loc[central_mask,:]
 
-        iisub=0;nsub_snap=snap_subhalo_catalogue.shape[0]
-        for isub,sub in snap_subhalo_catalogue.iterrows():
-            isub_com=[sub[f'CentreOfPotential_{x}'] for x in 'xyz']
-            isub_match=np.sqrt(np.sum(np.square(snap_fof_coms-isub_com),axis=1))==0
-            isnap_match=snap_subhalo_catalogue.index==isub
-            if np.sum(isub_match):
-                isub_fofdata=snap_fof_catalogue.loc[isub_match,fields_fof].values
-                snap_subhalo_catalogue.loc[isnap_match,fields_fof]=isub_fofdata
+        fofcat_snap=catalogue_fof.loc[catalogue_fof['snapshotidx']==snapidx,:]
+        fofcat_coms=catalogue_fof.loc[catalogue_fof['snapshotidx']==snapidx,[f"GroupCentreOfPotential_{x}" for x in 'xyz']].values
+        for icentral,(icentralidx,icentral_data) in enumerate(central_data.iterrows()):
+            if icentral%1000==0:
+                logging.info(f'Processing group {icentral+1} of {np.sum(central_mask)} at snipshot {snapidx}')
+            groupnum=int(icentral_data['GroupNumber'])
+            fofmatch=np.sqrt(np.sum(np.square(fofcat_coms-[icentral_data[f"CentreOfPotential_{x}"] for x in 'xyz']),axis=1))<=0.001
+            ifofmatch_data=fofcat_snap.loc[fofmatch,group_dsets].values
+            ifofsubhaloes=np.logical_and(catalogue_subhalo['GroupNumber']==groupnum,snap_mask)
+            if np.sum(fofmatch)>0:
+                subcat.loc[ifofsubhaloes,group_dsets]=ifofmatch_data
             else:
-                logging.info(f'Warning: could not match subhalo {iisub} at ({isub_com[0]:.2f},{isub_com[1]:.2f},{isub_com[2]:.2f}) cMpc')
-                pass
-
-            if not iisub%100:
-                logging.info(f'Done matching {(iisub+1)/nsub_snap*100:.1f}% of subhaloes at snap {snapidx} ({isnap+1}/{len(snapidxs_tomatch)}) [runtime {time.time()-t0:.2f} sec]')
-
-            iisub+=1
-        
-        catalogue_subhalo.loc[np.logical_and(catalogue_subhalo['snapshotidx']==snapidx,catalogue_subhalo['Mass']>mcut),:]=snap_subhalo_catalogue
-        print(catalogue_subhalo)
+                logging.info(f'Warning: no matching group for central {icentral}')
 
     os.remove(outname)
     catalogue_subhalo.to_hdf(outname,key='Subhalo')
