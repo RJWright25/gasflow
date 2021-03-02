@@ -337,8 +337,8 @@ def match_tree(mcut,snapidxmin=0):
     t0=time.time()
     for isnap,snapidx in enumerate(snapidxs_tomatch):
         logging.info(f'Processing snap {snapidx} ({isnap+1}/{len(snapidxs_tomatch)}) [runtime {time.time()-t0:.2f} sec]')
-
-        snap_subhalo_catalogue=catalogue_subhalo.loc[np.logical_and(catalogue_subhalo['snapshotidx']==snapidx,catalogue_subhalo['Mass']>mcut),:]
+        snap_mass_mask=np.logical_and(catalogue_subhalo['snapshotidx']==snapidx,catalogue_subhalo['Mass']>mcut)
+        snap_subhalo_catalogue=catalogue_subhalo.loc[snap_mass_mask,:]
         snap_tree_catalogue=catalogue_tree.loc[catalogue_tree['snapshotNumber']==snapidx,:]
         snap_tree_coms=snap_tree_catalogue.loc[:,[f'position_{x}' for x in 'xyz']].values
 
@@ -360,7 +360,7 @@ def match_tree(mcut,snapidxmin=0):
 
             iisub+=1
         
-        catalogue_subhalo.loc[np.logical_and(catalogue_subhalo['snapshotidx']==snapidx,catalogue_subhalo['Mass']>mcut),:]=snap_subhalo_catalogue
+        catalogue_subhalo.loc[snap_mass_mask,:]=snap_subhalo_catalogue
         print(catalogue_subhalo)
 
     os.remove(outname)
@@ -368,10 +368,56 @@ def match_tree(mcut,snapidxmin=0):
 
     
 
-    
+def match_fof(mcut,snapidxmin=0):
 
+    outname='catalogues/catalogue_subhalo.hdf5'
+    catalogue_subhalo=pd.read_hdf('catalogues/catalogue_subhalo.hdf5',key='Subhalo',mode='r')
+    catalogue_fof=pd.read_hdf('catalogues/catalogue_fof.hdf5',key='FOF',mode='r')
+    fields_fof=['GroupMass',
+                'Group_M_Crit200',
+                'Group_R_Crit200',
+                'NumOfSubhalos']
 
+    mcut=10**mcut/10**10
 
-    
-    
-#
+    if os.path.exists('logs/match_fof.log'):
+        os.remove('logs/match_fof.log')
+
+    logging.basicConfig(filename='logs/match_fof.log', level=logging.INFO)
+    logging.info(f'Running FOF matching for subhaloes with mass above {mcut*10**10:.1e} after (and including) snapidx {snapidxmin} ...')
+
+    for field in fields_fof:
+        catalogue_subhalo.loc[:,field]=-1
+
+    snapidxs_subhalo=catalogue_subhalo['snapshotidx'].unique()
+    snapidxs_tomatch=snapidxs_subhalo[np.where(snapidxs_subhalo>=snapidxmin)]
+
+    t0=time.time()
+    for isnap,snapidx in enumerate(snapidxs_tomatch):
+        logging.info(f'Processing snap {snapidx} ({isnap+1}/{len(snapidxs_tomatch)}) [runtime {time.time()-t0:.2f} sec]')
+        snap_mass_mask=np.logical_and(catalogue_subhalo['snapshotidx']==snapidx,catalogue_subhalo['Mass']>mcut)
+        central_mask=np.logical_and.reduce([snap_mass_mask,catalogue_subhalo['SubGroupNumber']==0])
+        snap_subhalo_catalogue=catalogue_subhalo.loc[snap_mass_mask,:]
+        snap_central_catalogue=catalogue_subhalo.loc[central_mask,:]
+
+        logging.info(f'Matching for {np.sum(central_mask)} groups with centrals above {mcut*10**10:.1e}msun at snipshot {snapidx} [runtime {time.time()-t0:.2f} sec]')
+        central_coms=snap_central_catalogue.loc[:,[f"CentreOfPotential_{x}" for x in 'xyz']].values
+        central_groupnums=snap_central_catalogue.loc[:,f"GroupNumber"].values
+
+        fofcat_snap=catalogue_fof.loc[catalogue_fof['snapshotidx']==snapidx,:]
+        fofcat_coms=catalogue_fof.loc[catalogue_fof['snapshotidx']==snapidx,[f"GroupCentreOfPotential_{x}" for x in 'xyz']].values
+        for icentral,(central_com,central_groupnum) in enumerate(zip(central_coms,central_groupnums)):
+            if icentral%1000==0:
+                logging.info(f'Processing group {icentral+1} of {np.sum(central_mask)} at snipshot {snapidx} ({icentral/np.sum(central_mask)*100:.1f}%) [runtime {time.time()-t0:.2f} sec]')
+            fofmatch=np.sum(np.square(fofcat_coms-central_com),axis=1)<=(0.001)**2
+            ifofmatch_data=fofcat_snap.loc[fofmatch,fields_fof].values
+            ifofsubhaloes=snap_subhalo_catalogue['GroupNumber']==int(central_groupnum)
+            if np.sum(ifofsubhaloes):
+                snap_subhalo_catalogue.loc[ifofsubhaloes,fields_fof]=ifofmatch_data
+            else:
+                logging.info(f'Warning: no matching group for central {icentral}')
+        
+        catalogue_subhalo.loc[snap_mass_mask,:]=snap_subhalo_catalogue
+
+    os.remove(outname)
+    catalogue_subhalo.to_hdf(outname,key='Subhalo')
