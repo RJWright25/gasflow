@@ -380,7 +380,7 @@ def match_fof(mcut,snapidxmin=0):
 
         snap_subhalo_catalogue=catalogue_subhalo.loc[np.logical_and(catalogue_subhalo['snapshotidx']==snapidx,catalogue_subhalo['Mass']>mcut),:]
         snap_fof_catalogue=catalogue_fof.loc[catalogue_fof['snapshotidx']==snapidx,:]
-        snap_fof_coms=snap_fof_catalogue.loc[:,[f'CentreOfPotential_{x}' for x in 'xyz']].values
+        snap_fof_coms=snap_fof_catalogue.loc[:,[f'GroupCentreOfPotential_{x}' for x in 'xyz']].values
 
         iisub=0;nsub_snap=snap_subhalo_catalogue.shape[0]
         for isub,sub in snap_subhalo_catalogue.iterrows():
