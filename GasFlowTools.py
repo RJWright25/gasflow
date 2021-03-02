@@ -384,17 +384,17 @@ def match_fof(mcut,snapidxmin=0):
 
         logging.info(f'Matching for {np.sum(central_mask)} groups with centrals above {mcut*10**10:.1e}msun at snipshot {snapidx} [runtime {time.time()-t0:.2f} sec]')
         central_coms=snap_central_catalogue.loc[:,[f"CentreOfPotential_{x}" for x in 'xyz']].values
+        central_groupnums=snap_central_catalogue.loc[:,f"GroupNumber"].values
 
         fofcat_snap=catalogue_fof.loc[catalogue_fof['snapshotidx']==snapidx,:]
         fofcat_coms=catalogue_fof.loc[catalogue_fof['snapshotidx']==snapidx,[f"GroupCentreOfPotential_{x}" for x in 'xyz']].values
-        for icentral,(icentralidx,icentral_data) in enumerate(snap_central_catalogue.iterrows()):
+        for icentral,(central_com,central_groupnum) in enumerate(zip(central_coms,central_groupnums)):
             if icentral%1000==0:
                 logging.info(f'Processing group {icentral+1} of {np.sum(central_mask)} at snipshot {snapidx} ({icentral/np.sum(central_mask)*100:.1f}%) [runtime {time.time()-t0:.2f} sec]')
-            groupnum=int(icentral_data['GroupNumber'])
-            fofmatch=np.sqrt(np.sum(np.square(fofcat_coms-central_coms[icentral,:]),axis=1))<=0.001
+            fofmatch=np.sum(np.square(fofcat_coms-central_com),axis=1)<=(0.001)**2
             ifofmatch_data=fofcat_snap.loc[fofmatch,fields_fof].values
-            ifofsubhaloes=snap_subhalo_catalogue['GroupNumber']==groupnum
-            if np.sum(fofmatch)>0:
+            ifofsubhaloes=snap_subhalo_catalogue['GroupNumber']==int(central_groupnum)
+            if np.sum(ifofsubhaloes):
                 snap_subhalo_catalogue.loc[ifofsubhaloes,fields_fof]=ifofmatch_data
             else:
                 logging.info(f'Warning: no matching group for central {icentral}')
