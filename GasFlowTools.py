@@ -257,7 +257,7 @@ def extract_subhalo(path,mcut,snapidxmin=0,overwrite=True):
                 ifile_mask=ifile_submasses>mcut
                 ifile_nfof=np.sum(ifile_mask)
     
-                logging.info(f'Snap {snapidx} ({isnap+1}/{len(groupdir)} total), file {ifile_snap+1}/{groupdirfnames_n}: extracting data for {ifile_nfof:.0f} subhaloes [runtime {time.time()-t0:.2f} sec]')
+                logging.info(f'Snap {snapidx} ({isnap+1}/{len(groupdirs)} total), file {ifile_snap+1}/{groupdirfnames_n}: extracting data for {ifile_nfof:.0f} subhaloes [runtime {time.time()-t0:.2f} sec]')
                 
                 if ifile_nfof:
                     newdata=pd.DataFrame(groupdirifile['/Subhalo/Mass'][ifile_mask],columns=['Mass'])
