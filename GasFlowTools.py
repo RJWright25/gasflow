@@ -393,7 +393,7 @@ def match_fof(mcut,snapidxmin=0):
             ifofmatch_data=fofcat_snap.loc[fofmatch,fields_fof].values
             ifofsubhaloes=np.logical_and(catalogue_subhalo['GroupNumber']==groupnum,snap_mask)
             if np.sum(fofmatch)>0:
-                catalogue_subhalo.loc[ifofsubhaloes,fields_fof]= np.rowstack([ifofmatch_data]*int(np.sum(ifofsubhaloes)))
+                catalogue_subhalo.loc[ifofsubhaloes,fields_fof]=ifofmatch_data
             else:
                 logging.info(f'Warning: no matching group for central {icentral}')
 
