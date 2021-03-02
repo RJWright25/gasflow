@@ -205,13 +205,14 @@ def extract_fof(path,mcut,snapidxmin=0):
     data.to_hdf(f'{outname}',key='FOF')
 
 
-def extract_subhalo(path,mcut,snapidxmin=0):
+def extract_subhalo(path,mcut,snapidxmin=0,overwrite=True):
     outname='catalogues/catalogue_subhalo.hdf5'
     fields=['/Subhalo/GroupNumber',
             '/Subhalo/SubGroupNumber',
             '/Subhalo/Mass',
             '/Subhalo/MassType',
             '/Subhalo/ApertureMeasurements/Mass/030kpc',
+            '/Subhalo/ApertureMeasurements/SFR/030kpc',
             '/Subhalo/Vmax',
             '/Subhalo/CentreOfPotential',
             '/Subhalo/Velocity',
@@ -281,11 +282,28 @@ def extract_subhalo(path,mcut,snapidxmin=0):
 
                     ifile+=1
                     groupdirifile.close()
-        
-    if os.path.exists(f'{outname}'):
-        os.remove(f'{outname}')
+    try:
+        if overwrite:
+            
+            if os.path.exists(f'{outname}'):
+                os.remove(f'{outname}')
+            data.to_hdf(f'{outname}',key='Subhalo')
 
-    data.to_hdf(f'{outname}',key='Subhalo')
+        else:
+            logging.info('Loading old catalogue ...')
+            data_old=pd.read_hdf(f'{outname}',key='Subhalo')
+            fields_new=list(data)
+            fields_old=list(data_old)
+            fields_new_mask=np.isin(fields_new,fields_old,invert=True)
+            fields_to_add=fields_new[np.where(fields_new_mask)]
+            for field_new in fields_to_add:
+                logging.info('Adding new field to old catalogue: {field_new}')
+                data_old.loc[:,field_new]=data[field_new].values
+
+            data_old.to_hdf(f'{outname}',key='Subhalo')
+    except:
+        data.to_hdf(f'catalogues/catalogue_subhalo-BACKUP.hdf5',key='Subhalo')
+
 
 
 def match_tree(mcut,snapidxmin=0):
