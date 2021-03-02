@@ -321,7 +321,7 @@ def match_tree(mcut,snapidxmin=0):
         logging.info(f'Processing snap {snapidx} ({isnap+1}/{len(snapidxs_tomatch)}) [runtime {time.time()-t0:.2f} sec]')
 
         snap_subhalo_catalogue=catalogue_subhalo.loc[np.logical_and(catalogue_subhalo['snapshotidx']==snapidx,catalogue_subhalo['Mass']>mcut),:]
-        snap_tree_catalogue=catalogue_tree.loc[catalogue_tree['snapshotidx']==snapidx,:]
+        snap_tree_catalogue=catalogue_tree.loc[catalogue_tree['snapshotNumber']==snapidx,:]
         snap_tree_coms=snap_tree_catalogue.loc[:,[f'position_{x}' for x in 'xyz']].values
 
         iisub=0;nsub_snap=snap_subhalo_catalogue.shape[0]
@@ -379,7 +379,7 @@ def match_fof(mcut,snapidxmin=0):
         logging.info(f'Processing snap {snapidx} ({isnap+1}/{len(snapidxs_tomatch)}) [runtime {time.time()-t0:.2f} sec]')
 
         snap_subhalo_catalogue=catalogue_subhalo.loc[np.logical_and(catalogue_subhalo['snapshotidx']==snapidx,catalogue_subhalo['Mass']>mcut),:]
-        snap_fof_catalogue=catalogue_fof.loc[catalogue_fof['Snapshot']==snapidx,:]
+        snap_fof_catalogue=catalogue_fof.loc[catalogue_fof['snapshotidx']==snapidx,:]
         snap_fof_coms=snap_fof_catalogue.loc[:,[f'CentreOfPotential_{x}' for x in 'xyz']].values
 
         iisub=0;nsub_snap=snap_subhalo_catalogue.shape[0]
