@@ -378,8 +378,9 @@ def match_fof(mcut,snapidxmin=0):
     for isnap,snapidx in enumerate(snapidxs_tomatch):
         logging.info(f'Processing snap {snapidx} ({isnap+1}/{len(snapidxs_tomatch)}) [runtime {time.time()-t0:.2f} sec]')
         snap_mass_mask=np.logical_and(catalogue_subhalo['snapshotidx']==snapidx,catalogue_subhalo['Mass']>mcut)
+        central_mask=np.logical_and.reduce([snap_mass_mask,catalogue_subhalo['SubGroupNumber']==0])
         snap_subhalo_catalogue=catalogue_subhalo.loc[snap_mass_mask,:]
-        snap_central_catalogue=catalogue_subhalo.loc[np.logical_and.reduce([snap_mass_mask,catalogue_subhalo['SubGroupNumber']==0]),:]
+        snap_central_catalogue=catalogue_subhalo.loc[central_mask,:]
 
         logging.info(f'Matching for {np.sum(central_mask)} groups with centrals above {mcut*10**10:.1e}msun at snipshot {snapidx} [runtime {time.time()-t0:.2f} sec]')
         central_coms=snap_central_catalogue.loc[:,[f"CentreOfPotential_{x}" for x in 'xyz']].values
