@@ -547,7 +547,7 @@ def analyse_gasflow(path,mcut,snapidx,nvol,ivol,snapidx_delta=1,r200_facs=[0.075
             treefile1.close()
             gen1=False
         except:
-            print('Could not load snap 1 KD tree - generating [runtime = {time.time()-t0:.2f}s]')
+            logging.info(f'Could not load snap 1 KD tree - generating [runtime = {time.time()-t0:.2f}s]')
             treefile1.close()
             gen1=True
             pass
@@ -556,13 +556,13 @@ def analyse_gasflow(path,mcut,snapidx,nvol,ivol,snapidx_delta=1,r200_facs=[0.075
 
     if os.path.exists(treefname2):
         logging.info(f'Loading existing KDTree for snap 2 [runtime = {time.time()-t0:.2f}s]')
-        treefile1=open(treefname2,'rb')
+        treefile2=open(treefname2,'rb')
         try:
             kdtree_snap2_periodic=pickle.load(treefile2)
             treefile2.close()
             gen2=False
         except:
-            print('Could not load snap 2 KD tree - generating [runtime = {time.time()-t0:.2f}s]')
+            logging.info(f'Could not load snap 2 KD tree - generating [runtime = {time.time()-t0:.2f}s]')
             treefile2.close()
             gen2=True
             pass
