@@ -715,16 +715,16 @@ def analyse_gasflow(path,mcut,snapidx,nvol,ivol,snapidx_delta=1,r200_facs=[0.075
             gasflow_df.loc[iigalaxy,'Outflow/'+radius_str]=np.sum(part_data_candidates_snap2.loc[ism_partidx_out,'Mass'])
 
 
-            logging.info(f'Done with galaxy {iigalaxy+1} of {numgal_subvolume} for this subvolume [runtime = {time.time()-t0:.2f}s]')
-            logging.info(f'')
-            success.append(1)
+        logging.info(f'Done with galaxy {iigalaxy+1} of {numgal_subvolume} for this subvolume [runtime = {time.time()-t0:.2f}s]')
+        logging.info(f'')
+        success.append(1)
 
-        logging.info(f'{np.sum(success):.0f} of {len(success):.0f} galaxies were successfully processed ({np.nanmean(success)*100:.1f}%) [runtime = {time.time()-t0:.2f}s]')
+    logging.info(f'{np.sum(success):.0f} of {len(success):.0f} galaxies were successfully processed ({np.nanmean(success)*100:.1f}%) [runtime = {time.time()-t0:.2f}s]')
 
-        output_fname=f'catalogues/gasflow/gasflow_snapidx_{snapidx}_n_{str(nvol).zfill(2)}_volume_{ivol}.hdf5'
-        if os.path.exists(output_fname):
-            os.remove(output_fname)
+    output_fname=f'catalogues/gasflow/gasflow_snapidx_{snapidx}_n_{str(nvol).zfill(2)}_volume_{ivol}.hdf5'
+    if os.path.exists(output_fname):
+        os.remove(output_fname)
 
-        gasflow_df.to_hdf(output_fname,key='Flux')
+    gasflow_df.to_hdf(output_fname,key='Flux')
 
 
