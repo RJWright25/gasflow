@@ -12,6 +12,7 @@ from scipy.spatial import cKDTree
 from astropy.cosmology import FlatLambdaCDM
 
 def submit_function(function,arguments,memory,time):
+        
     filename=sys.argv[0]
     cwd=os.getcwd()
     run=cwd.split('/')[-1]
@@ -21,7 +22,10 @@ def submit_function(function,arguments,memory,time):
     if not os.path.exists('logs'):
         os.mkdir('logs')
 
-    jobname=function+'_'+run
+    if function=='analyse_gasflow':
+        jobname=function+'_'+run+f"_n_{str(arguments['nvol']).zfill(2)}_volume{str(arguments['ivol']).zfill(3)}"
+    else:
+        jobname=function+'_'+run
     runscriptfilepath=f'{cwd}/jobs/{jobname}-run.py'
     jobscriptfilepath=f'{cwd}/jobs/{jobname}-submit.slurm'
     if os.path.exists(jobscriptfilepath):
