@@ -2,9 +2,14 @@ import os
 import sys
 import time
 import logging
+import pickle
 import h5py
 import numpy as np
 import pandas as pd
+
+from read_eagle import EagleSnapshot
+from scipy.spatial import cKDTree
+from astropy.cosmology import FlatLambdaCDM
 
 def submit_function(function,arguments,memory,time):
     filename=sys.argv[0]
@@ -204,7 +209,6 @@ def extract_fof(path,mcut,snapidxmin=0):
 
     data.to_hdf(f'{outname}',key='FOF')
 
-
 def extract_subhalo(path,mcut,snapidxmin=0):
     outname='catalogues/catalogue_subhalo.hdf5'
     fields=['/Subhalo/GroupNumber',
@@ -287,7 +291,6 @@ def extract_subhalo(path,mcut,snapidxmin=0):
 
     data.to_hdf(f'{outname}',key='Subhalo')
 
-
 def match_tree(mcut,snapidxmin=0):
 
     outname='catalogues/catalogue_subhalo.hdf5'
@@ -348,8 +351,6 @@ def match_tree(mcut,snapidxmin=0):
     os.remove(outname)
     catalogue_subhalo.to_hdf(outname,key='Subhalo')
 
-    
-
 def match_fof(mcut,snapidxmin=0):
 
     outname='catalogues/catalogue_subhalo.hdf5'
@@ -403,3 +404,41 @@ def match_fof(mcut,snapidxmin=0):
 
     os.remove(outname)
     catalogue_subhalo.to_hdf(outname,key='Subhalo')
+
+def ivol_gen(ix,iy,iz,nvol):
+    ivol=ix*nvol**2+iy*nvol+iz
+    ivol_str=str(ivol).zfill(3)
+    return ivol_str
+
+def ivol_idx(ivol,nvol):
+    if type(ivol)==str:
+        ivol=int(ivol)
+    ix=int(np.floor(ivol/nvol**2))
+    iz=int(ivol%nvol)
+    iy=int((ivol-ix*nvol**2-iz)/nvol)
+    return (ix,iy,iz)
+
+def analyse_gasflow(path,mcut,snapidx,nvol,ivol,snapidx_delta=1,r200_facs=[0.075,0.15,0.50,1.0]):
+
+    ivol=int(ivol)
+    ivol=str(ivol).zfill(3)
+    ix,iy,iz=ivol_idx(ivol,nvol=nvol)
+
+    logfile=f'logs/gasflow/gasflow_snapidx_{snapidx}_n_{nvol}_volume_{ivol}.log'
+    if os.path.exists(logfile):
+        os.remove(logfile)
+    logging.basicConfig(filename=logfile, level=logging.INFO)
+
+
+    redshift_table=pd.read_hdf('snipshot_redshifts.hdf5',key='snipshots')
+
+    snapidx2=snapidx;snapidx2_tag=redshift_table.loc[redshift_table['snapshotidx']==snapidx2,'tag'].values[0]
+    snapidx1=snapidx2-snapidx_delta;snapidx1_tag=redshift_table.loc[redshift_table['snapshotidx']==snapidx1,'tag'].values[0]
+
+    print(snapidx1_tag,snapidx2_tag)
+
+
+
+
+
+
