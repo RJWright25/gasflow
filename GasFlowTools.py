@@ -455,8 +455,8 @@ def analyse_gasflow(path,mcut,snapidx,nvol,ivol,snapidx_delta=1,r200_facs=[0.075
     snapidx1_particledatapath=f'/fred/oz009/clagos/EAGLE/L0100N1504/data/particledata_{snapidx1_tag}/eagle_subfind_snip_particles_{snapidx1_tag[5:]}.0.hdf5'
     snapidx2_particledatapath=f'/fred/oz009/clagos/EAGLE/L0100N1504/data/particledata_{snapidx2_tag}/eagle_subfind_snip_particles_{snapidx2_tag[5:]}.0.hdf5'
 
-    cosmology=FlatLambdaCDM(H0=h5py.File(particledatapath_snap2,'r')['Header'].attrs['HubbleParam']*100,
-                            Om0=h5py.File(particledatapath_snap2,'r')['Header'].attrs['Omega0'])
+    cosmology=FlatLambdaCDM(H0=h5py.File(snapidx2_particledatapath,'r')['Header'].attrs['HubbleParam']*100,
+                            Om0=h5py.File(snapidx2_particledatapath,'r')['Header'].attrs['Omega0'])
 
     snapidx1_z=h5py.File(snapidx1_particledatapath,'r')['Header'].attrs['Redshift'];snapidx1_lt=cosmology.lookback_time(snapidx1_z)
     snapidx2_z=h5py.File(snapidx2_particledatapath,'r')['Header'].attrs['Redshift'];snapidx2_lt=cosmology.lookback_time(snapidx2_z)
@@ -530,7 +530,7 @@ def analyse_gasflow(path,mcut,snapidx,nvol,ivol,snapidx_delta=1,r200_facs=[0.075
     logging.info(f'Particle data snap 1 memory usage: {size1:.2f} GB')
     logging.info(f'Particle data snap 2 memory usage: {size2:.2f} GB')
 
-    
+
 
 
 
