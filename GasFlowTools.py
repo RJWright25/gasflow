@@ -92,7 +92,7 @@ def extract_tree(path,mcut,snapidxmin=0):
         os.remove('logs/extract_tree.log')
 
     logging.basicConfig(filename='logs/extract_tree.log', level=logging.INFO)
-    logging.info(f'Running tree extraction for haloes with mass above {mcut*10**10:.1e} after (and including) snapidx {snapidxmin} ...')
+    logfile.writelines(f'Running tree extraction for haloes with mass above {mcut*10**10:.1e} after (and including) snapidx {snapidxmin} ...')
 
     # get file names
     tree_fnames=os.listdir(path)
@@ -102,7 +102,7 @@ def extract_tree(path,mcut,snapidxmin=0):
     # iterate through all tree files
     t0=time.time()
     for ifile,tree_fname in enumerate(tree_fnames):
-        logging.info(f'Processing file {ifile+1} of {nfiles}')
+        logfile.writelines(f'Processing file {ifile+1} of {nfiles}')
         treefile=h5py.File(f'{path}/{tree_fname}')
 
         #mass mask
@@ -110,11 +110,11 @@ def extract_tree(path,mcut,snapidxmin=0):
         mask=np.logical_and(masses>mcut,snipshotidx>=snapidxmin)
 
         #initialise new data
-        logging.info(f'Extracting position for {np.sum(mask):.0f} nodes [runtime {time.time()-t0:.2f} sec]')
+        logfile.writelines(f'Extracting position for {np.sum(mask):.0f} nodes [runtime {time.time()-t0:.2f} sec]')
         newdata=pd.DataFrame(treefile['/haloTrees/position'][mask,:],columns=['position_x','position_y','position_z'])
 
         #grab all fields
-        logging.info(f'Extracting data for {np.sum(mask):.0f} nodes [runtime {time.time()-t0:.2f} sec]')
+        logfile.writelines(f'Extracting data for {np.sum(mask):.0f} nodes [runtime {time.time()-t0:.2f} sec]')
         newdata.loc[:,fields]=np.column_stack([treefile['/haloTrees/'+field][mask] for field in fields])
 
         #append to data frame
@@ -151,7 +151,7 @@ def extract_fof(path,mcut,snapidxmin=0):
         os.remove('logs/extract_fof.log')
 
     logging.basicConfig(filename='logs/extract_fof.log', level=logging.INFO)
-    logging.info(f'Running FOF extraction for FOFs with mass above {mcut*10**10:.1e} after (and including) snapidx {snapidxmin} ...')
+    logfile.writelines(f'Running FOF extraction for FOFs with mass above {mcut*10**10:.1e} after (and including) snapidx {snapidxmin} ...')
 
     t0=time.time()
     ifile=0
@@ -161,12 +161,12 @@ def extract_fof(path,mcut,snapidxmin=0):
         try:
             snapidx=redshift_table.loc[snap==redshift_table['snapshot'],'snapshotidx'].values[0]
         except:
-            logging.info(f'Skipping snap {snapidx} (not in trees) [runtime {time.time()-t0:.2f} sec]')
+            logfile.writelines(f'Skipping snap {snapidx} (not in trees) [runtime {time.time()-t0:.2f} sec]')
             continue
 
         if snapidx>=snapidxmin:
             isnap+=1
-            logging.info(f'Processing snap {snapidx} ({isnap+1}/{len(groupdir)} total) [runtime {time.time()-t0:.2f} sec]')
+            logfile.writelines(f'Processing snap {snapidx} ({isnap+1}/{len(groupdir)} total) [runtime {time.time()-t0:.2f} sec]')
             groupdirfnames=os.listdir(groupdir)
             groupdirfnames=sorted([groupdir+'/'+groupdirfname for groupdirfname in groupdirfnames if groupdirfname.startswith('eagle_subfind')])
             groupdirfnames_n=len(groupdirfnames)
@@ -178,7 +178,7 @@ def extract_fof(path,mcut,snapidxmin=0):
                 ifile_mask=ifile_fofmasses>mcut
                 ifile_nfof=np.sum(ifile_mask)
     
-                logging.info(f'Snap {snapidx} ({isnap+1}/{len(groupdir)} total), file {ifile_snap+1}/{groupdirfnames_n}: extracting data for {ifile_nfof:.0f} FOFs [runtime {time.time()-t0:.2f} sec]')
+                logfile.writelines(f'Snap {snapidx} ({isnap+1}/{len(groupdir)} total), file {ifile_snap+1}/{groupdirfnames_n}: extracting data for {ifile_nfof:.0f} FOFs [runtime {time.time()-t0:.2f} sec]')
                 
                 if ifile_nfof:
                     newdata=pd.DataFrame(groupdirifile['/FOF/GroupMass'][ifile_mask],columns=['GroupMass'])
@@ -234,7 +234,7 @@ def extract_subhalo(path,mcut,snapidxmin=0,overwrite=True):
         os.remove('logs/extract_subhalo.log')
 
     logging.basicConfig(filename='logs/extract_subhalo.log', level=logging.INFO)
-    logging.info(f'Running subhalo extraction for subhaloes with mass above {mcut*10**10:.1e} after (and including) snapidx {snapidxmin} ...')
+    logfile.writelines(f'Running subhalo extraction for subhaloes with mass above {mcut*10**10:.1e} after (and including) snapidx {snapidxmin} ...')
 
     t0=time.time()
     ifile=0
@@ -244,12 +244,12 @@ def extract_subhalo(path,mcut,snapidxmin=0,overwrite=True):
         try:
             snapidx=redshift_table.loc[snap==redshift_table['snapshot'],'snapshotidx'].values[0]
         except:
-            logging.info(f'Skipping snap {snapidx} (not in trees) [runtime {time.time()-t0:.2f} sec]')
+            logfile.writelines(f'Skipping snap {snapidx} (not in trees) [runtime {time.time()-t0:.2f} sec]')
             continue
 
         if snapidx>=snapidxmin:
             isnap+=1
-            logging.info(f'Processing snap {snapidx} ({isnap+1}/{len(groupdirs)} total) [runtime {time.time()-t0:.2f} sec]')
+            logfile.writelines(f'Processing snap {snapidx} ({isnap+1}/{len(groupdirs)} total) [runtime {time.time()-t0:.2f} sec]')
             groupdirfnames=os.listdir(groupdir)
             groupdirfnames=sorted([groupdir+'/'+groupdirfname for groupdirfname in groupdirfnames if groupdirfname.startswith('eagle_subfind')])
             groupdirfnames_n=len(groupdirfnames)
@@ -261,7 +261,7 @@ def extract_subhalo(path,mcut,snapidxmin=0,overwrite=True):
                 ifile_mask=ifile_submasses>mcut
                 ifile_nfof=np.sum(ifile_mask)
     
-                logging.info(f'Snap {snapidx} ({isnap+1}/{len(groupdirs)} total), file {ifile_snap+1}/{groupdirfnames_n}: extracting data for {ifile_nfof:.0f} subhaloes [runtime {time.time()-t0:.2f} sec]')
+                logfile.writelines(f'Snap {snapidx} ({isnap+1}/{len(groupdirs)} total), file {ifile_snap+1}/{groupdirfnames_n}: extracting data for {ifile_nfof:.0f} subhaloes [runtime {time.time()-t0:.2f} sec]')
                 
                 if ifile_nfof:
                     newdata=pd.DataFrame(groupdirifile['/Subhalo/Mass'][ifile_mask],columns=['Mass'])
@@ -294,14 +294,14 @@ def extract_subhalo(path,mcut,snapidxmin=0,overwrite=True):
             data.to_hdf(f'{outname}',key='Subhalo')
 
         else:
-            logging.info(f'Loading old catalogue ...')
+            logfile.writelines(f'Loading old catalogue ...')
             data_old=pd.read_hdf(f'{outname}',key='Subhalo')
             fields_new=list(data)
             fields_old=list(data_old)
             fields_new_mask=np.isin(fields_new,fields_old,invert=True)
             fields_to_add=fields_new[np.where(fields_new_mask)]
             for field_new in fields_to_add:
-                logging.info(f'Adding new field to old catalogue: {field_new}')
+                logfile.writelines(f'Adding new field to old catalogue: {field_new}')
                 data_old.loc[:,field_new]=data[field_new].values
 
             data_old.to_hdf(f'{outname}',key='Subhalo')
@@ -326,7 +326,7 @@ def match_tree(mcut,snapidxmin=0):
         os.remove('logs/match_tree.log')
 
     logging.basicConfig(filename='logs/match_tree.log', level=logging.INFO)
-    logging.info(f'Running tree matching for subhaloes with mass above {mcut*10**10:.1e} after (and including) snapidx {snapidxmin} ...')
+    logfile.writelines(f'Running tree matching for subhaloes with mass above {mcut*10**10:.1e} after (and including) snapidx {snapidxmin} ...')
 
     for field in fields_tree:
         catalogue_subhalo.loc[:,field]=-1
@@ -338,7 +338,7 @@ def match_tree(mcut,snapidxmin=0):
 
     t0=time.time()
     for isnap,snapidx in enumerate(snapidxs_tomatch):
-        logging.info(f'Processing snap {snapidx} ({isnap+1}/{len(snapidxs_tomatch)}) [runtime {time.time()-t0:.2f} sec]')
+        logfile.writelines(f'Processing snap {snapidx} ({isnap+1}/{len(snapidxs_tomatch)}) [runtime {time.time()-t0:.2f} sec]')
         snap_mass_mask=np.logical_and(catalogue_subhalo['snapshotidx']==snapidx,catalogue_subhalo['Mass']>mcut)
         snap_catalogue_subhalo=catalogue_subhalo.loc[snap_mass_mask,:]
         snap_tree_catalogue=catalogue_tree.loc[catalogue_tree['snapshotNumber']==snapidx,:]
@@ -354,11 +354,11 @@ def match_tree(mcut,snapidxmin=0):
                 isub_treedata=snap_tree_catalogue.loc[isub_match,fields_tree].values
                 snap_catalogue_subhalo.loc[isnap_match,fields_tree]=isub_treedata
             else:
-                logging.info(f'Warning: could not match subhalo {iisub} at ({isub_com[0]:.2f},{isub_com[1]:.2f},{isub_com[2]:.2f}) cMpc')
+                logfile.writelines(f'Warning: could not match subhalo {iisub} at ({isub_com[0]:.2f},{isub_com[1]:.2f},{isub_com[2]:.2f}) cMpc')
                 pass
 
             if not iisub%100:
-                logging.info(f'Done matching {(iisub+1)/nsub_snap*100:.1f}% of subhaloes at snap {snapidx} ({isnap+1}/{len(snapidxs_tomatch)}) [runtime {time.time()-t0:.2f} sec]')
+                logfile.writelines(f'Done matching {(iisub+1)/nsub_snap*100:.1f}% of subhaloes at snap {snapidx} ({isnap+1}/{len(snapidxs_tomatch)}) [runtime {time.time()-t0:.2f} sec]')
 
             iisub+=1
         
@@ -384,7 +384,7 @@ def match_fof(mcut,snapidxmin=0):
         os.remove('logs/match_fof.log')
 
     logging.basicConfig(filename='logs/match_fof.log', level=logging.INFO)
-    logging.info(f'Running FOF matching for subhaloes with mass above {mcut*10**10:.1e} after (and including) snapidx {snapidxmin} ...')
+    logfile.writelines(f'Running FOF matching for subhaloes with mass above {mcut*10**10:.1e} after (and including) snapidx {snapidxmin} ...')
 
     for field in fields_fof:
         catalogue_subhalo.loc[:,field]=-1
@@ -394,13 +394,13 @@ def match_fof(mcut,snapidxmin=0):
 
     t0=time.time()
     for isnap,snapidx in enumerate(snapidxs_tomatch):
-        logging.info(f'Processing snap {snapidx} ({isnap+1}/{len(snapidxs_tomatch)}) [runtime {time.time()-t0:.2f} sec]')
+        logfile.writelines(f'Processing snap {snapidx} ({isnap+1}/{len(snapidxs_tomatch)}) [runtime {time.time()-t0:.2f} sec]')
         snap_mass_mask=np.logical_and(catalogue_subhalo['snapshotidx']==snapidx,catalogue_subhalo['Mass']>mcut)
         central_mask=np.logical_and.reduce([snap_mass_mask,catalogue_subhalo['SubGroupNumber']==0])
         snap_catalogue_subhalo=catalogue_subhalo.loc[snap_mass_mask,:]
         snap_central_catalogue=catalogue_subhalo.loc[central_mask,:]
 
-        logging.info(f'Matching for {np.sum(central_mask)} groups with centrals above {mcut*10**10:.1e}msun at snipshot {snapidx} [runtime {time.time()-t0:.2f} sec]')
+        logfile.writelines(f'Matching for {np.sum(central_mask)} groups with centrals above {mcut*10**10:.1e}msun at snipshot {snapidx} [runtime {time.time()-t0:.2f} sec]')
         central_coms=snap_central_catalogue.loc[:,[f"CentreOfPotential_{x}" for x in 'xyz']].values
         central_groupnums=snap_central_catalogue.loc[:,f"GroupNumber"].values
 
@@ -408,14 +408,14 @@ def match_fof(mcut,snapidxmin=0):
         fofcat_coms=catalogue_fof.loc[catalogue_fof['snapshotidx']==snapidx,[f"GroupCentreOfPotential_{x}" for x in 'xyz']].values
         for icentral,(central_com,central_groupnum) in enumerate(zip(central_coms,central_groupnums)):
             if icentral%1000==0:
-                logging.info(f'Processing group {icentral+1} of {np.sum(central_mask)} at snipshot {snapidx} ({icentral/np.sum(central_mask)*100:.1f}%) [runtime {time.time()-t0:.2f} sec]')
+                logfile.writelines(f'Processing group {icentral+1} of {np.sum(central_mask)} at snipshot {snapidx} ({icentral/np.sum(central_mask)*100:.1f}%) [runtime {time.time()-t0:.2f} sec]')
             fofmatch=np.sum(np.square(fofcat_coms-central_com),axis=1)<=(0.001)**2
             ifofmatch_data=fofcat_snap.loc[fofmatch,fields_fof].values
             ifofsubhaloes=snap_catalogue_subhalo['GroupNumber']==int(central_groupnum)
             if np.sum(ifofsubhaloes):
                 snap_catalogue_subhalo.loc[ifofsubhaloes,fields_fof]=ifofmatch_data
             else:
-                logging.info(f'Warning: no matching group for central {icentral}')
+                logfile.writelines(f'Warning: no matching group for central {icentral}')
         
         catalogue_subhalo.loc[snap_mass_mask,:]=snap_catalogue_subhalo
 
@@ -442,10 +442,10 @@ def analyse_gasflow(path,mcut,snapidx,nvol,ivol,snapidx_delta=1,r200_facs=[0.075
     ix,iy,iz=ivol_idx(ivol,nvol=nvol)
 
     t0=time.time()
-    logfile=f'logs/gasflow/gasflow_snapidx_{snapidx}_n_{str(nvol).zfill(2)}_volume_{ivol}.log'
-    if os.path.exists(logfile):
-        os.remove(logfile)
-    logging.basicConfig(filename=logfile, level=logging.INFO)
+    logfile_fname=f'logs/gasflow/gasflow_snapidx_{snapidx}_n_{str(nvol).zfill(2)}_volume_{ivol}.log'
+    if os.path.exists(logfile_fname):
+        os.remove(logfile_fname)
+    logfile=open(logfile_fname,'r+')
 
     #background data for calc
     redshift_table=pd.read_hdf('snapshot_redshifts.hdf5',key='snapshots')
@@ -477,21 +477,21 @@ def analyse_gasflow(path,mcut,snapidx,nvol,ivol,snapidx_delta=1,r200_facs=[0.075
     zmin=iz*subvol_edgelength;zmax=(iz+1)*subvol_edgelength
 
 
-    logging.info(f'Considering region: (1/{nvol**3} of full box) [runtime = {time.time()-t0:.2f}s]')
-    logging.info(f'ix: {ix} - x in [{xmin},{xmax}]')
-    logging.info(f'iy: {iy} - y in [{ymin},{ymax}]')
-    logging.info(f'iz: {iz} - z in [{zmin},{zmax}]')
+    logfile.writelines(f'Considering region: (1/{nvol**3} of full box) [runtime = {time.time()-t0:.2f}s]\n')
+    logfile.writelines(f'ix: {ix} - x in [{xmin},{xmax}]\n')
+    logfile.writelines(f'iy: {iy} - y in [{ymin},{ymax}]\n')
+    logfile.writelines(f'iz: {iz} - z in [{zmin},{zmax}]\n')
 
     snapidx1_eagledata.select_region(xmin-buffer, xmax+buffer, ymin-buffer, ymax+buffer, zmin-buffer, zmax+buffer)
     snapidx2_eagledata.select_region(xmin-buffer, xmax+buffer, ymin-buffer, ymax+buffer, zmin-buffer, zmax+buffer)
 
-    logging.info(f'Initialising particle data with IDs [runtime = {time.time()-t0:.2f}s]')
+    logfile.writelines(f'Initialising particle data with IDs [runtime = {time.time()-t0:.2f}s]\n')
     particledata_snap1=pd.DataFrame(snapidx1_eagledata.read_dataset(0,'ParticleIDs'),columns=['ParticleIDs']);particledata_snap1.loc[:,"ParticleTypes"]=0
     particledata_snap2=pd.DataFrame(snapidx2_eagledata.read_dataset(0,'ParticleIDs'),columns=['ParticleIDs']);particledata_snap2.loc[:,"ParticleTypes"]=0
     particledata_snap1_star=pd.DataFrame(snapidx1_eagledata.read_dataset(4,'ParticleIDs'),columns=['ParticleIDs']);particledata_snap1_star.loc[:,"ParticleTypes"]=4;particledata_snap1_star.loc[:,"Temperature"]=np.nan;particledata_snap1_star.loc[:,"Density"]=np.nan
     particledata_snap2_star=pd.DataFrame(snapidx2_eagledata.read_dataset(4,'ParticleIDs'),columns=['ParticleIDs']);particledata_snap2_star.loc[:,"ParticleTypes"]=4;particledata_snap2_star.loc[:,"Temperature"]=np.nan;particledata_snap2_star.loc[:,"Density"]=np.nan
 
-    logging.info(f'Reading gas datasets [runtime = {time.time()-t0:.2f}s]')
+    logfile.writelines(f'Reading gas datasets [runtime = {time.time()-t0:.2f}s]\n')
     for dset in ['Coordinates','Velocity','Mass','Density','Temperature','Metallicity']:
         dset_snap1=snapidx1_eagledata.read_dataset(0,dset)
         dset_snap2=snapidx2_eagledata.read_dataset(0,dset)
@@ -506,7 +506,7 @@ def analyse_gasflow(path,mcut,snapidx,nvol,ivol,snapidx_delta=1,r200_facs=[0.075
                 particledata_snap1[dset]=dset_snap1
                 particledata_snap2[dset]=dset_snap2
 
-    logging.info(f'Reading star datasets [runtime = {time.time()-t0:.2f}s]')
+    logfile.writelines(f'Reading star datasets [runtime = {time.time()-t0:.2f}s]\n')
     for dset in ['Coordinates','Velocity','Mass']:
         dset_snap1=snapidx1_eagledata.read_dataset(4,dset)
         dset_snap2=snapidx2_eagledata.read_dataset(4,dset)
@@ -521,33 +521,33 @@ def analyse_gasflow(path,mcut,snapidx,nvol,ivol,snapidx_delta=1,r200_facs=[0.075
                 particledata_snap1_star[dset]=dset_snap1
                 particledata_snap2_star[dset]=dset_snap2
 
-    logging.info(f'Done reading datasets - concatenating gas and star data [runtime = {time.time()-t0:.2f}s]')
+    logfile.writelines(f'Done reading datasets - concatenating gas and star data [runtime = {time.time()-t0:.2f}s]\n')
     particledata_snap1=particledata_snap1.append(particledata_snap1_star,ignore_index=True)
     particledata_snap2=particledata_snap2.append(particledata_snap2_star,ignore_index=True)
 
-    logging.info(f'Sorting by IDs [runtime = {time.time()-t0:.2f}s]')
+    logfile.writelines(f'Sorting by IDs [runtime = {time.time()-t0:.2f}s]\n')
     particledata_snap1.sort_values(by="ParticleIDs",inplace=True);particledata_snap1.reset_index(inplace=True,drop=True)
     particledata_snap2.sort_values(by="ParticleIDs",inplace=True);particledata_snap2.reset_index(inplace=True,drop=True)
     size1=np.sum(particledata_snap1.memory_usage().values)/10**9;size2=np.sum(particledata_snap2.memory_usage().values)/10**9
     
-    logging.info(f'Particle data snap 1 memory usage: {size1:.2f} GB')
-    logging.info(f'Particle data snap 2 memory usage: {size2:.2f} GB')
+    logfile.writelines(f'Particle data snap 1 memory usage: {size1:.2f} GB')
+    logfile.writelines(f'Particle data snap 2 memory usage: {size2:.2f} GB')
 
     #particle KD trees
-    logging.info(f'Searching for existing KDTrees [runtime = {time.time()-t0:.2f}s]')
+    logfile.writelines(f'Searching for existing KDTrees [runtime = {time.time()-t0:.2f}s]\n')
 
     treefname1=f'catalogues/kdtrees/kdtree_snapidx_{snapidx1}_n_{str(nvol).zfill(2)}_volume_{ivol}.dat'
     treefname2=f'catalogues/kdtrees/kdtree_snapidx_{snapidx2}_n_{str(nvol).zfill(2)}_volume_{ivol}.dat'
 
     if os.path.exists(treefname1):
-        logging.info(f'Loading existing KDTree for snap 1 [runtime = {time.time()-t0:.2f}s]')
+        logfile.writelines(f'Loading existing KDTree for snap 1 [runtime = {time.time()-t0:.2f}s]\n')
         treefile1=open(treefname1,'rb')
         try:
             kdtree_snap1_periodic=pickle.load(treefile1)
             treefile1.close()
             gen1=False
         except:
-            logging.info(f'Could not load snap 1 KD tree - generating [runtime = {time.time()-t0:.2f}s]')
+            logfile.writelines(f'Could not load snap 1 KD tree - generating [runtime = {time.time()-t0:.2f}s]\n')
             treefile1.close()
             gen1=True
             pass
@@ -555,14 +555,14 @@ def analyse_gasflow(path,mcut,snapidx,nvol,ivol,snapidx_delta=1,r200_facs=[0.075
         gen1=True
 
     if os.path.exists(treefname2):
-        logging.info(f'Loading existing KDTree for snap 2 [runtime = {time.time()-t0:.2f}s]')
+        logfile.writelines(f'Loading existing KDTree for snap 2 [runtime = {time.time()-t0:.2f}s]\n')
         treefile2=open(treefname2,'rb')
         try:
             kdtree_snap2_periodic=pickle.load(treefile2)
             treefile2.close()
             gen2=False
         except:
-            logging.info(f'Could not load snap 2 KD tree - generating [runtime = {time.time()-t0:.2f}s]')
+            logfile.writelines(f'Could not load snap 2 KD tree - generating [runtime = {time.time()-t0:.2f}s]\n')
             treefile2.close()
             gen2=True
             pass
@@ -570,13 +570,13 @@ def analyse_gasflow(path,mcut,snapidx,nvol,ivol,snapidx_delta=1,r200_facs=[0.075
         gen2=True
     
     if gen1:
-        logging.info(f'Generating KDTree for snap 1 [runtime = {time.time()-t0:.2f}s]')
+        logfile.writelines(f'Generating KDTree for snap 1 [runtime = {time.time()-t0:.2f}s]\n')
         kdtree_snap1_periodic= cKDTree(np.column_stack([particledata_snap1[f'Coordinates_{x}'] for x in 'xyz']),boxsize=boxsize)
         treefile1=open(treefname1,'wb')
         pickle.dump(kdtree_snap1_periodic,treefile1)
         treefile1.close()
     if gen2:
-        logging.info(f'Generating KDTree for snap 2 [runtime = {time.time()-t0:.2f}s]')
+        logfile.writelines(f'Generating KDTree for snap 2 [runtime = {time.time()-t0:.2f}s]\n')
         kdtree_snap2_periodic= cKDTree(np.column_stack([particledata_snap2[f'Coordinates_{x}'] for x in 'xyz']),boxsize=boxsize)
         treefile2=open(treefname2,'wb')
         pickle.dump(kdtree_snap2_periodic,treefile2)
@@ -594,7 +594,7 @@ def analyse_gasflow(path,mcut,snapidx,nvol,ivol,snapidx_delta=1,r200_facs=[0.075
     snap2_com_mask_2=np.logical_and.reduce([catalogue_subhalo[f'CentreOfPotential_{x}']<=ixmax for x,ixmax in zip('xyz',[xmax,ymax,zmax])])
     snap2_com_mask=np.logical_and.reduce([snap2_com_mask_1,snap2_com_mask_2,snap2_mask,snap2_mass_mask])
     numgal_subvolume=np.sum(snap2_com_mask);numgal_total=np.sum(np.logical_and(snap2_mask,snap2_mass_mask))
-    logging.info(f'Using {numgal_subvolume} of {numgal_total} valid galaxies from box [runtime = {time.time()-t0:.2f}s]')
+    logfile.writelines(f'Using {numgal_subvolume} of {numgal_total} valid galaxies from box [runtime = {time.time()-t0:.2f}s]\n')
 
     #initialise output
     initfields=['nodeIndex','GroupNumber','SubGroupNumber']
@@ -649,8 +649,8 @@ def analyse_gasflow(path,mcut,snapidx,nvol,ivol,snapidx_delta=1,r200_facs=[0.075
             matches=part_data_candidates_snap2.loc[:,"ParticleIDs"].values==part_data_candidates_snap1.loc[:,"ParticleIDs"].values
             matchrate=np.sum(matches)/len(matches)
             if matchrate<0.9:
-                logging.info(f'Skipping galaxy {iigalaxy+1} of {numgal_subvolume} - poorly matched ({matchrate*100:.1f}%)')
-                logging.info(f'')
+                logfile.writelines(f'Skipping galaxy {iigalaxy+1} of {numgal_subvolume} - poorly matched ({matchrate*100:.1f}%)')
+                logfile.writelines(f'')
                 success.append(0)
                 continue
             part_data_candidates_snap2=part_data_candidates_snap2.loc[matches,:]
@@ -715,11 +715,11 @@ def analyse_gasflow(path,mcut,snapidx,nvol,ivol,snapidx_delta=1,r200_facs=[0.075
             gasflow_df.loc[iigalaxy,'Outflow/'+radius_str]=np.sum(part_data_candidates_snap2.loc[ism_partidx_out,'Mass'])
 
 
-        logging.info(f'Done with galaxy {iigalaxy+1} of {numgal_subvolume} for this subvolume [runtime = {time.time()-t0:.2f}s]')
-        logging.info(f'')
+        logfile.writelines(f'Done with galaxy {iigalaxy+1} of {numgal_subvolume} for this subvolume [runtime = {time.time()-t0:.2f}s]\n')
+        logfile.writelines(f'')
         success.append(1)
 
-    logging.info(f'{np.sum(success):.0f} of {len(success):.0f} galaxies were successfully processed ({np.nanmean(success)*100:.1f}%) [runtime = {time.time()-t0:.2f}s]')
+    logfile.writelines(f'{np.sum(success):.0f} of {len(success):.0f} galaxies were successfully processed ({np.nanmean(success)*100:.1f}%) [runtime = {time.time()-t0:.2f}s]\n')
 
     output_fname=f'catalogues/gasflow/gasflow_snapidx_{snapidx}_n_{str(nvol).zfill(2)}_volume_{ivol}.hdf5'
     if os.path.exists(output_fname):
