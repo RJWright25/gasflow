@@ -209,13 +209,14 @@ def extract_fof(path,mcut,snapidxmin=0):
 
     data.to_hdf(f'{outname}',key='FOF')
 
-def extract_subhalo(path,mcut,snapidxmin=0):
+def extract_subhalo(path,mcut,snapidxmin=0,overwrite=True):
     outname='catalogues/catalogue_subhalo.hdf5'
     fields=['/Subhalo/GroupNumber',
             '/Subhalo/SubGroupNumber',
             '/Subhalo/Mass',
             '/Subhalo/MassType',
             '/Subhalo/ApertureMeasurements/Mass/030kpc',
+            '/Subhalo/ApertureMeasurements/SFR/030kpc',
             '/Subhalo/Vmax',
             '/Subhalo/CentreOfPotential',
             '/Subhalo/Velocity',
@@ -248,7 +249,7 @@ def extract_subhalo(path,mcut,snapidxmin=0):
 
         if snapidx>=snapidxmin:
             isnap+=1
-            logging.info(f'Processing snap {snapidx} ({isnap+1}/{len(groupdir)} total) [runtime {time.time()-t0:.2f} sec]')
+            logging.info(f'Processing snap {snapidx} ({isnap+1}/{len(groupdirs)} total) [runtime {time.time()-t0:.2f} sec]')
             groupdirfnames=os.listdir(groupdir)
             groupdirfnames=sorted([groupdir+'/'+groupdirfname for groupdirfname in groupdirfnames if groupdirfname.startswith('eagle_subfind')])
             groupdirfnames_n=len(groupdirfnames)
@@ -260,7 +261,7 @@ def extract_subhalo(path,mcut,snapidxmin=0):
                 ifile_mask=ifile_submasses>mcut
                 ifile_nfof=np.sum(ifile_mask)
     
-                logging.info(f'Snap {snapidx} ({isnap+1}/{len(groupdir)} total), file {ifile_snap+1}/{groupdirfnames_n}: extracting data for {ifile_nfof:.0f} subhaloes [runtime {time.time()-t0:.2f} sec]')
+                logging.info(f'Snap {snapidx} ({isnap+1}/{len(groupdirs)} total), file {ifile_snap+1}/{groupdirfnames_n}: extracting data for {ifile_nfof:.0f} subhaloes [runtime {time.time()-t0:.2f} sec]')
                 
                 if ifile_nfof:
                     newdata=pd.DataFrame(groupdirifile['/Subhalo/Mass'][ifile_mask],columns=['Mass'])
@@ -285,11 +286,28 @@ def extract_subhalo(path,mcut,snapidxmin=0):
 
                     ifile+=1
                     groupdirifile.close()
-        
-    if os.path.exists(f'{outname}'):
-        os.remove(f'{outname}')
+    try:
+        if overwrite:
+            
+            if os.path.exists(f'{outname}'):
+                os.remove(f'{outname}')
+            data.to_hdf(f'{outname}',key='Subhalo')
 
-    data.to_hdf(f'{outname}',key='Subhalo')
+        else:
+            logging.info('Loading old catalogue ...')
+            data_old=pd.read_hdf(f'{outname}',key='Subhalo')
+            fields_new=list(data)
+            fields_old=list(data_old)
+            fields_new_mask=np.isin(fields_new,fields_old,invert=True)
+            fields_to_add=fields_new[np.where(fields_new_mask)]
+            for field_new in fields_to_add:
+                logging.info('Adding new field to old catalogue: {field_new}')
+                data_old.loc[:,field_new]=data[field_new].values
+
+            data_old.to_hdf(f'{outname}',key='Subhalo')
+    except:
+        data.to_hdf(f'catalogues/catalogue_subhalo-BACKUP.hdf5',key='Subhalo')
+
 
 def match_tree(mcut,snapidxmin=0):
 
