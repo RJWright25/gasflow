@@ -446,15 +446,91 @@ def analyse_gasflow(path,mcut,snapidx,nvol,ivol,snapidx_delta=1,r200_facs=[0.075
         os.remove(logfile)
     logging.basicConfig(filename=logfile, level=logging.INFO)
 
+    #background data for calc
     redshift_table=pd.read_hdf('snapshot_redshifts.hdf5',key='snapshots')
 
     snapidx2=snapidx;snapidx2_tag=redshift_table.loc[redshift_table['snapshotidx']==snapidx2,'tag'].values[0]
     snapidx1=snapidx2-snapidx_delta;snapidx1_tag=redshift_table.loc[redshift_table['snapshotidx']==snapidx1,'tag'].values[0]
 
-    print(snapidx1_tag,snapidx2_tag)
+    snapidx1_particledatapath=f'/fred/oz009/clagos/EAGLE/L0100N1504/data/particledata_{snapidx1_tag}/eagle_subfind_snip_particles_{snapidx1_tag[5:]}.0.hdf5'
+    snapidx2_particledatapath=f'/fred/oz009/clagos/EAGLE/L0100N1504/data/particledata_{snapidx2_tag}/eagle_subfind_snip_particles_{snapidx2_tag[5:]}.0.hdf5'
 
+    cosmology=FlatLambdaCDM(H0=h5py.File(particledatapath_snap2,'r')['Header'].attrs['HubbleParam']*100,
+                            Om0=h5py.File(particledatapath_snap2,'r')['Header'].attrs['Omega0'])
 
+    snapidx1_z=h5py.File(snapidx1_particledatapath,'r')['Header'].attrs['Redshift'];snapidx1_lt=cosmology.lookback_time(snapidx1_z)
+    snapidx2_z=h5py.File(snapidx2_particledatapath,'r')['Header'].attrs['Redshift'];snapidx2_lt=cosmology.lookback_time(snapidx2_z)
+    delta_lt=snapidx1_lt-snapidx2_lt
+    boxsize=h5py.File(snapidx2_particledatapath,'r')['Header'].attrs['BoxSize']
+    nh_conversion=6.76991e-31/(1.6726219e-24)
 
+    #read data
+    snapidx1_eagledata = EagleSnapshot(snapidx1_particledatapath)
+    snapidx2_eagledata = EagleSnapshot(snapidx2_particledatapath)
+
+    subvol_edgelength=boxsize/nvol
+    buffer=subvol_edgelength/10
+
+    xmin=ix*subvol_edgelength;xmax=(ix+1)*subvol_edgelength
+    ymin=iy*subvol_edgelength;ymax=(iy+1)*subvol_edgelength
+    zmin=iz*subvol_edgelength;zmax=(iz+1)*subvol_edgelength
+
+    logging.info(f'Considering region: (1/{nvol**3} of full box)')
+    logging.info(f'ix: {ix} - x in [{xmin},{xmax}]')
+    logging.info(f'iy: {iy} - y in [{ymin},{ymax}]')
+    logging.info(f'iz: {iz} - z in [{zmin},{zmax}]')
+
+    snapidx1_eagledata.select_region(xmin-buffer, xmax+buffer, ymin-buffer, ymax+buffer, zmin-buffer, zmax+buffer)
+    snapidx2_eagledata.select_region(xmin-buffer, xmax+buffer, ymin-buffer, ymax+buffer, zmin-buffer, zmax+buffer)
+
+    logging.info('Initialising particle data with IDs ...')
+    particledata_snap1=pd.DataFrame(snapidx1_eagledata.read_dataset(0,'ParticleIDs'),columns=['ParticleIDs']);particledata_snap1.loc[:,"ParticleTypes"]=0
+    particledata_snap2=pd.DataFrame(snapidx2_eagledata.read_dataset(0,'ParticleIDs'),columns=['ParticleIDs']);particledata_snap2.loc[:,"ParticleTypes"]=0
+    particledata_snap1_star=pd.DataFrame(snapidx1_eagledata.read_dataset(4,'ParticleIDs'),columns=['ParticleIDs']);particledata_snap1_star.loc[:,"ParticleTypes"]=4;particledata_snap1_star.loc[:,"Temperature"]=np.nan;particledata_snap1_star.loc[:,"Density"]=np.nan
+    particledata_snap2_star=pd.DataFrame(snapidx2_eagledata.read_dataset(4,'ParticleIDs'),columns=['ParticleIDs']);particledata_snap2_star.loc[:,"ParticleTypes"]=4;particledata_snap2_star.loc[:,"Temperature"]=np.nan;particledata_snap2_star.loc[:,"Density"]=np.nan
+
+    logging.info('Reading gas datasets ...')
+    for dset in ['Coordinates','Velocity','Mass','Density','Temperature','Metallicity']:
+        dset_snap1=snapidx1_eagledata.read_dataset(0,dset)
+        dset_snap2=snapidx2_eagledata.read_dataset(0,dset)
+        if dset_snap2.shape[-1]==3:
+                particledata_snap1.loc[:,[f'{dset}_x',f'{dset}_y',f'{dset}_z']]=dset_snap1
+                particledata_snap2.loc[:,[f'{dset}_x',f'{dset}_y',f'{dset}_z']]=dset_snap2
+        else:
+            if dset=='Mass':
+                particledata_snap1[dset]=dset_snap1
+                particledata_snap2[dset]=dset_snap2
+            else:
+                particledata_snap1[dset]=dset_snap1
+                particledata_snap2[dset]=dset_snap2
+
+    logging.info('Reading star datasets ...')
+    for dset in ['Coordinates','Velocity','Mass']:
+        dset_snap1=snapidx1_eagledata.read_dataset(4,dset)
+        dset_snap2=snapidx2_eagledata.read_dataset(4,dset)
+        if dset_snap2.shape[-1]==3:
+            particledata_snap1_star.loc[:,[f'{dset}_x',f'{dset}_y',f'{dset}_z']]=dset_snap1
+            particledata_snap2_star.loc[:,[f'{dset}_x',f'{dset}_y',f'{dset}_z']]=dset_snap2
+        else:
+            if dset=='Mass':
+                particledata_snap1_star[dset]=dset_snap1
+                particledata_snap2_star[dset]=dset_snap2
+            else:
+                particledata_snap1_star[dset]=dset_snap1
+                particledata_snap2_star[dset]=dset_snap2
+
+    logging.info('Done reading datasets - concatenating gas and star data ...')
+    particledata_snap1=particledata_snap1.append(particledata_snap1_star,ignore_index=True)
+    particledata_snap2=particledata_snap2.append(particledata_snap2_star,ignore_index=True)
+
+    logging.info('Sorting by IDs ...')
+    particledata_snap1.sort_values(by="ParticleIDs",inplace=True);particledata_snap1.reset_index(inplace=True,drop=True)
+    particledata_snap2.sort_values(by="ParticleIDs",inplace=True);particledata_snap2.reset_index(inplace=True,drop=True)
+    size1=np.sum(particledata_snap1.memory_usage().values)/10**9;size2=np.sum(particledata_snap2.memory_usage().values)/10**9
+    logging.info(f'Particle data snap 1 memory usage: {size1:.2f} GB')
+    logging.info(f'Particle data snap 2 memory usage: {size2:.2f} GB')
+
+    
 
 
 
