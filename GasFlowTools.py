@@ -23,7 +23,7 @@ def submit_function(function,arguments,memory,time):
         os.mkdir('logs')
 
     if function=='analyse_gasflow':
-        jobname=function+'_'+run+f"_n_{str(arguments['nvol']).zfill(2)}_volume{str(arguments['ivol']).zfill(3)}"
+        jobname=function+'_'+run+f"_n_{str(arguments['nvol']).zfill(2)}_volume_{str(arguments['ivol']).zfill(3)}"
     else:
         jobname=function+'_'+run
     runscriptfilepath=f'{cwd}/jobs/{jobname}-run.py'
@@ -449,7 +449,7 @@ def analyse_gasflow(path,mcut,snapidx,nvol,ivol,snapidx_delta=1,r200_facs=[0.075
     logfile_fname=f'logs/gasflow/gasflow_snapidx_{snapidx}_n_{str(nvol).zfill(2)}_volume_{ivol}.log'
     if os.path.exists(logfile_fname):
         os.remove(logfile_fname)
-    logfile=open(logfile_fname,'r+')
+    logfile=open(logfile_fname,'w')
 
     #background data for calc
     redshift_table=pd.read_hdf('snapshot_redshifts.hdf5',key='snapshots')
