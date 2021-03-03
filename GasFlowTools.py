@@ -446,7 +446,7 @@ def analyse_gasflow(path,mcut,snapidx,nvol,ivol,snapidx_delta=1,r200_facs=[0.075
         os.remove(logfile)
     logging.basicConfig(filename=logfile, level=logging.INFO)
 
-    redshift_table=pd.read_hdf('snipshot_redshifts.hdf5',key='snipshots')
+    redshift_table=pd.read_hdf('snapshot_redshifts.hdf5',key='snipshots')
 
     snapidx2=snapidx;snapidx2_tag=redshift_table.loc[redshift_table['snapshotidx']==snapidx2,'tag'].values[0]
     snapidx1=snapidx2-snapidx_delta;snapidx1_tag=redshift_table.loc[redshift_table['snapshotidx']==snapidx1,'tag'].values[0]
