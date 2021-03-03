@@ -726,5 +726,6 @@ def analyse_gasflow(path,mcut,snapidx,nvol,ivol,snapidx_delta=1,r200_facs=[0.075
         os.remove(output_fname)
 
     gasflow_df.to_hdf(output_fname,key='Flux')
+    print(gasflow_df)
 
 
