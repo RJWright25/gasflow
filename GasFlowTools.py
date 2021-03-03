@@ -294,14 +294,14 @@ def extract_subhalo(path,mcut,snapidxmin=0,overwrite=True):
             data.to_hdf(f'{outname}',key='Subhalo')
 
         else:
-            logging.info('Loading old catalogue ...')
+            logging.info(f'Loading old catalogue ...')
             data_old=pd.read_hdf(f'{outname}',key='Subhalo')
             fields_new=list(data)
             fields_old=list(data_old)
             fields_new_mask=np.isin(fields_new,fields_old,invert=True)
             fields_to_add=fields_new[np.where(fields_new_mask)]
             for field_new in fields_to_add:
-                logging.info('Adding new field to old catalogue: {field_new}')
+                logging.info(f'Adding new field to old catalogue: {field_new}')
                 data_old.loc[:,field_new]=data[field_new].values
 
             data_old.to_hdf(f'{outname}',key='Subhalo')
@@ -441,6 +441,7 @@ def analyse_gasflow(path,mcut,snapidx,nvol,ivol,snapidx_delta=1,r200_facs=[0.075
     ivol=str(ivol).zfill(3)
     ix,iy,iz=ivol_idx(ivol,nvol=nvol)
 
+    t0=time.time()
     logfile=f'logs/gasflow/gasflow_snapidx_{snapidx}_n_{str(nvol).zfill(2)}_volume_{ivol}.log'
     if os.path.exists(logfile):
         os.remove(logfile)
@@ -475,7 +476,8 @@ def analyse_gasflow(path,mcut,snapidx,nvol,ivol,snapidx_delta=1,r200_facs=[0.075
     ymin=iy*subvol_edgelength;ymax=(iy+1)*subvol_edgelength
     zmin=iz*subvol_edgelength;zmax=(iz+1)*subvol_edgelength
 
-    logging.info(f'Considering region: (1/{nvol**3} of full box)')
+
+    logging.info(f'Considering region: (1/{nvol**3} of full box) [runtime = {time.time-t0:.2f}s]')
     logging.info(f'ix: {ix} - x in [{xmin},{xmax}]')
     logging.info(f'iy: {iy} - y in [{ymin},{ymax}]')
     logging.info(f'iz: {iz} - z in [{zmin},{zmax}]')
@@ -483,13 +485,13 @@ def analyse_gasflow(path,mcut,snapidx,nvol,ivol,snapidx_delta=1,r200_facs=[0.075
     snapidx1_eagledata.select_region(xmin-buffer, xmax+buffer, ymin-buffer, ymax+buffer, zmin-buffer, zmax+buffer)
     snapidx2_eagledata.select_region(xmin-buffer, xmax+buffer, ymin-buffer, ymax+buffer, zmin-buffer, zmax+buffer)
 
-    logging.info('Initialising particle data with IDs ...')
+    logging.info(f'Initialising particle data with IDs [runtime = {time.time-t0:.2f}s]')
     particledata_snap1=pd.DataFrame(snapidx1_eagledata.read_dataset(0,'ParticleIDs'),columns=['ParticleIDs']);particledata_snap1.loc[:,"ParticleTypes"]=0
     particledata_snap2=pd.DataFrame(snapidx2_eagledata.read_dataset(0,'ParticleIDs'),columns=['ParticleIDs']);particledata_snap2.loc[:,"ParticleTypes"]=0
     particledata_snap1_star=pd.DataFrame(snapidx1_eagledata.read_dataset(4,'ParticleIDs'),columns=['ParticleIDs']);particledata_snap1_star.loc[:,"ParticleTypes"]=4;particledata_snap1_star.loc[:,"Temperature"]=np.nan;particledata_snap1_star.loc[:,"Density"]=np.nan
     particledata_snap2_star=pd.DataFrame(snapidx2_eagledata.read_dataset(4,'ParticleIDs'),columns=['ParticleIDs']);particledata_snap2_star.loc[:,"ParticleTypes"]=4;particledata_snap2_star.loc[:,"Temperature"]=np.nan;particledata_snap2_star.loc[:,"Density"]=np.nan
 
-    logging.info('Reading gas datasets ...')
+    logging.info(f'Reading gas datasets [runtime = {time.time-t0:.2f}s]')
     for dset in ['Coordinates','Velocity','Mass','Density','Temperature','Metallicity']:
         dset_snap1=snapidx1_eagledata.read_dataset(0,dset)
         dset_snap2=snapidx2_eagledata.read_dataset(0,dset)
@@ -504,7 +506,7 @@ def analyse_gasflow(path,mcut,snapidx,nvol,ivol,snapidx_delta=1,r200_facs=[0.075
                 particledata_snap1[dset]=dset_snap1
                 particledata_snap2[dset]=dset_snap2
 
-    logging.info('Reading star datasets ...')
+    logging.info(f'Reading star datasets [runtime = {time.time-t0:.2f}s]')
     for dset in ['Coordinates','Velocity','Mass']:
         dset_snap1=snapidx1_eagledata.read_dataset(4,dset)
         dset_snap2=snapidx2_eagledata.read_dataset(4,dset)
@@ -519,11 +521,11 @@ def analyse_gasflow(path,mcut,snapidx,nvol,ivol,snapidx_delta=1,r200_facs=[0.075
                 particledata_snap1_star[dset]=dset_snap1
                 particledata_snap2_star[dset]=dset_snap2
 
-    logging.info('Done reading datasets - concatenating gas and star data ...')
+    logging.info(f'Done reading datasets - concatenating gas and star data [runtime = {time.time-t0:.2f}s]')
     particledata_snap1=particledata_snap1.append(particledata_snap1_star,ignore_index=True)
     particledata_snap2=particledata_snap2.append(particledata_snap2_star,ignore_index=True)
 
-    logging.info('Sorting by IDs ...')
+    logging.info(f'Sorting by IDs [runtime = {time.time-t0:.2f}s]')
     particledata_snap1.sort_values(by="ParticleIDs",inplace=True);particledata_snap1.reset_index(inplace=True,drop=True)
     particledata_snap2.sort_values(by="ParticleIDs",inplace=True);particledata_snap2.reset_index(inplace=True,drop=True)
     size1=np.sum(particledata_snap1.memory_usage().values)/10**9;size2=np.sum(particledata_snap2.memory_usage().values)/10**9
@@ -532,20 +534,20 @@ def analyse_gasflow(path,mcut,snapidx,nvol,ivol,snapidx_delta=1,r200_facs=[0.075
     logging.info(f'Particle data snap 2 memory usage: {size2:.2f} GB')
 
     #particle KD trees
-    logging.info('Searching for existing KDTrees ...')
+    logging.info(f'Searching for existing KDTrees [runtime = {time.time-t0:.2f}s]')
 
     treefname1=f'catalogues/kdtrees/kdtree_snapidx_{snapidx1}_n_{str(nvol).zfill(2)}_volume_{ivol}.dat'
     treefname2=f'catalogues/kdtrees/kdtree_snapidx_{snapidx2}_n_{str(nvol).zfill(2)}_volume_{ivol}.dat'
 
     if os.path.exists(treefname1):
-        logging.info('Loading existing KDTree for snap 1...')
+        logging.info(f'Loading existing KDTree for snap 1 [runtime = {time.time-t0:.2f}s]')
         treefile1=open(treefname1,'rb')
         try:
             kdtree_snap1_periodic=pickle.load(treefile1)
             treefile1.close()
             gen1=False
         except:
-            print('Could not load snap 1 KD tree - generating')
+            print('Could not load snap 1 KD tree - generating [runtime = {time.time-t0:.2f}s]')
             treefile1.close()
             gen1=True
             pass
@@ -553,14 +555,14 @@ def analyse_gasflow(path,mcut,snapidx,nvol,ivol,snapidx_delta=1,r200_facs=[0.075
         gen1=True
 
     if os.path.exists(treefname2):
-        logging.info('Loading existing KDTree for snap 2...')
+        logging.info(f'Loading existing KDTree for snap 2 [runtime = {time.time-t0:.2f}s]')
         treefile1=open(treefname2,'rb')
         try:
             kdtree_snap2_periodic=pickle.load(treefile2)
             treefile2.close()
             gen2=False
         except:
-            print('Could not load snap 2 KD tree - generating')
+            print('Could not load snap 2 KD tree - generating [runtime = {time.time-t0:.2f}s]')
             treefile2.close()
             gen2=True
             pass
@@ -568,13 +570,13 @@ def analyse_gasflow(path,mcut,snapidx,nvol,ivol,snapidx_delta=1,r200_facs=[0.075
         gen2=True
     
     if gen1:
-        logging.info(f'Generating KDTree for snap 1... ')
+        logging.info(f'Generating KDTree for snap 1 [runtime = {time.time-t0:.2f}s]')
         kdtree_snap1_periodic= cKDTree(np.column_stack([particledata_snap1[f'Coordinates_{x}'] for x in 'xyz']),boxsize=boxsize)
         treefile1=open(treefname1,'wb')
         pickle.dump(kdtree_snap1_periodic,treefile1)
         treefile1.close()
     if gen2:
-        logging.info(f'Generating KDTree for snap 2... ')
+        logging.info(f'Generating KDTree for snap 2 [runtime = {time.time-t0:.2f}s]')
         kdtree_snap2_periodic= cKDTree(np.column_stack([particledata_snap2[f'Coordinates_{x}'] for x in 'xyz']),boxsize=boxsize)
         treefile2=open(treefname2,'wb')
         pickle.dump(kdtree_snap2_periodic,treefile2)
@@ -592,7 +594,7 @@ def analyse_gasflow(path,mcut,snapidx,nvol,ivol,snapidx_delta=1,r200_facs=[0.075
     snap2_com_mask_2=np.logical_and.reduce([catalogue_subhalo[f'CentreOfPotential_{x}']<=ixmax for x,ixmax in zip('xyz',[xmax,ymax,zmax])])
     snap2_com_mask=np.logical_and.reduce([snap2_com_mask_1,snap2_com_mask_2,snap2_mask,snap2_mass_mask])
     numgal_subvolume=np.sum(snap2_com_mask);numgal_total=np.sum(np.logical_and(snap2_mask,snap2_mass_mask))
-    logging.info(f'Using {numgal_subvolume} of {numgal_total} valid galaxies from box')
+    logging.info(f'Using {numgal_subvolume} of {numgal_total} valid galaxies from box [runtime = {time.time-t0:.2f}s]')
 
     #initialise output
     initfields=['nodeIndex','GroupNumber','SubGroupNumber']
@@ -648,7 +650,7 @@ def analyse_gasflow(path,mcut,snapidx,nvol,ivol,snapidx_delta=1,r200_facs=[0.075
             matchrate=np.sum(matches)/len(matches)
             if matchrate<0.9:
                 logging.info(f'Skipping galaxy {iigalaxy+1} of {numgal_subvolume} - poorly matched ({matchrate*100:.1f}%)')
-                logging.info('')
+                logging.info(f'')
                 success.append(0)
                 continue
             part_data_candidates_snap2=part_data_candidates_snap2.loc[matches,:]
@@ -713,11 +715,11 @@ def analyse_gasflow(path,mcut,snapidx,nvol,ivol,snapidx_delta=1,r200_facs=[0.075
             gasflow_df.loc[iigalaxy,'Outflow/'+radius_str]=np.sum(part_data_candidates_snap2.loc[ism_partidx_out,'Mass'])
 
 
-            logging.info(f'Done with galaxy {iigalaxy+1} of {numgal_subvolume} for this subvolume')
-            logging.info('')
+            logging.info(f'Done with galaxy {iigalaxy+1} of {numgal_subvolume} for this subvolume [runtime = {time.time-t0:.2f}s]')
+            logging.info(f'')
             success.append(1)
 
-        logging.info(f'{np.sum(success):.0f} of {len(success):.0f} galaxies were successfully processed ({np.nanmean(success)*100:.1f}%)')
+        logging.info(f'{np.sum(success):.0f} of {len(success):.0f} galaxies were successfully processed ({np.nanmean(success)*100:.1f}%) [runtime = {time.time-t0:.2f}s]')
 
         output_fname=f'catalogues/gasflow/gasflow_snapidx_{snapidx}_n_{str(nvol).zfill(2)}_volume_{ivol}.hdf5'
         if os.path.exists(output_fname):
@@ -725,4 +727,4 @@ def analyse_gasflow(path,mcut,snapidx,nvol,ivol,snapidx_delta=1,r200_facs=[0.075
 
         gasflow_df.to_hdf(output_fname,key='Flux')
 
-        
+
