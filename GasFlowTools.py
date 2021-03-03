@@ -340,19 +340,19 @@ def match_tree(mcut,snapidxmin=0):
     for isnap,snapidx in enumerate(snapidxs_tomatch):
         logging.info(f'Processing snap {snapidx} ({isnap+1}/{len(snapidxs_tomatch)}) [runtime {time.time()-t0:.2f} sec]')
         snap_mass_mask=np.logical_and(catalogue_subhalo['snapshotidx']==snapidx,catalogue_subhalo['Mass']>mcut)
-        snap_subhalo_catalogue=catalogue_subhalo.loc[snap_mass_mask,:]
+        snap_catalogue_subhalo=catalogue_subhalo.loc[snap_mass_mask,:]
         snap_tree_catalogue=catalogue_tree.loc[catalogue_tree['snapshotNumber']==snapidx,:]
         snap_tree_coms=snap_tree_catalogue.loc[:,[f'position_{x}' for x in 'xyz']].values
 
-        iisub=0;nsub_snap=snap_subhalo_catalogue.shape[0]
+        iisub=0;nsub_snap=snap_catalogue_subhalo.shape[0]
         t0halo=time.time()
-        for isub,sub in snap_subhalo_catalogue.iterrows():
+        for isub,sub in snap_catalogue_subhalo.iterrows():
             isub_com=[sub[f'CentreOfPotential_{x}'] for x in 'xyz']
             isub_match=np.sqrt(np.sum(np.square(snap_tree_coms-isub_com),axis=1))==0
-            isnap_match=snap_subhalo_catalogue.index==isub
+            isnap_match=snap_catalogue_subhalo.index==isub
             if np.sum(isub_match):
                 isub_treedata=snap_tree_catalogue.loc[isub_match,fields_tree].values
-                snap_subhalo_catalogue.loc[isnap_match,fields_tree]=isub_treedata
+                snap_catalogue_subhalo.loc[isnap_match,fields_tree]=isub_treedata
             else:
                 logging.info(f'Warning: could not match subhalo {iisub} at ({isub_com[0]:.2f},{isub_com[1]:.2f},{isub_com[2]:.2f}) cMpc')
                 pass
@@ -362,7 +362,7 @@ def match_tree(mcut,snapidxmin=0):
 
             iisub+=1
         
-        catalogue_subhalo.loc[snap_mass_mask,:]=snap_subhalo_catalogue
+        catalogue_subhalo.loc[snap_mass_mask,:]=snap_catalogue_subhalo
         print(catalogue_subhalo)
 
     os.remove(outname)
@@ -397,7 +397,7 @@ def match_fof(mcut,snapidxmin=0):
         logging.info(f'Processing snap {snapidx} ({isnap+1}/{len(snapidxs_tomatch)}) [runtime {time.time()-t0:.2f} sec]')
         snap_mass_mask=np.logical_and(catalogue_subhalo['snapshotidx']==snapidx,catalogue_subhalo['Mass']>mcut)
         central_mask=np.logical_and.reduce([snap_mass_mask,catalogue_subhalo['SubGroupNumber']==0])
-        snap_subhalo_catalogue=catalogue_subhalo.loc[snap_mass_mask,:]
+        snap_catalogue_subhalo=catalogue_subhalo.loc[snap_mass_mask,:]
         snap_central_catalogue=catalogue_subhalo.loc[central_mask,:]
 
         logging.info(f'Matching for {np.sum(central_mask)} groups with centrals above {mcut*10**10:.1e}msun at snipshot {snapidx} [runtime {time.time()-t0:.2f} sec]')
@@ -411,13 +411,13 @@ def match_fof(mcut,snapidxmin=0):
                 logging.info(f'Processing group {icentral+1} of {np.sum(central_mask)} at snipshot {snapidx} ({icentral/np.sum(central_mask)*100:.1f}%) [runtime {time.time()-t0:.2f} sec]')
             fofmatch=np.sum(np.square(fofcat_coms-central_com),axis=1)<=(0.001)**2
             ifofmatch_data=fofcat_snap.loc[fofmatch,fields_fof].values
-            ifofsubhaloes=snap_subhalo_catalogue['GroupNumber']==int(central_groupnum)
+            ifofsubhaloes=snap_catalogue_subhalo['GroupNumber']==int(central_groupnum)
             if np.sum(ifofsubhaloes):
-                snap_subhalo_catalogue.loc[ifofsubhaloes,fields_fof]=ifofmatch_data
+                snap_catalogue_subhalo.loc[ifofsubhaloes,fields_fof]=ifofmatch_data
             else:
                 logging.info(f'Warning: no matching group for central {icentral}')
         
-        catalogue_subhalo.loc[snap_mass_mask,:]=snap_subhalo_catalogue
+        catalogue_subhalo.loc[snap_mass_mask,:]=snap_catalogue_subhalo
 
     os.remove(outname)
     catalogue_subhalo.to_hdf(outname,key='Subhalo')
@@ -441,7 +441,7 @@ def analyse_gasflow(path,mcut,snapidx,nvol,ivol,snapidx_delta=1,r200_facs=[0.075
     ivol=str(ivol).zfill(3)
     ix,iy,iz=ivol_idx(ivol,nvol=nvol)
 
-    logfile=f'logs/gasflow/gasflow_snapidx_{snapidx}_n_{nvol}_volume_{ivol}.log'
+    logfile=f'logs/gasflow/gasflow_snapidx_{snapidx}_n_{str(nvol).zfill(2)}_volume_{ivol}.log'
     if os.path.exists(logfile):
         os.remove(logfile)
     logging.basicConfig(filename=logfile, level=logging.INFO)
@@ -527,10 +527,202 @@ def analyse_gasflow(path,mcut,snapidx,nvol,ivol,snapidx_delta=1,r200_facs=[0.075
     particledata_snap1.sort_values(by="ParticleIDs",inplace=True);particledata_snap1.reset_index(inplace=True,drop=True)
     particledata_snap2.sort_values(by="ParticleIDs",inplace=True);particledata_snap2.reset_index(inplace=True,drop=True)
     size1=np.sum(particledata_snap1.memory_usage().values)/10**9;size2=np.sum(particledata_snap2.memory_usage().values)/10**9
+    
     logging.info(f'Particle data snap 1 memory usage: {size1:.2f} GB')
     logging.info(f'Particle data snap 2 memory usage: {size2:.2f} GB')
 
+    #particle KD trees
+    logging.info('Searching for existing KDTrees ...')
+
+    treefname1=f'catalogues/kdtrees/kdtree_snapidx_{snapidx1}_n_{str(nvol).zfill(2)}_volume_{ivol}.dat'
+    treefname2=f'catalogues/kdtrees/kdtree_snapidx_{snapidx2}_n_{str(nvol).zfill(2)}_volume_{ivol}.dat'
+
+    if os.path.exists(treefname1):
+        logging.info('Loading existing KDTree for snap 1...')
+        treefile1=open(treefname1,'rb')
+        try:
+            kdtree_snap1_periodic=pickle.load(treefile1)
+            treefile1.close()
+            gen1=False
+        except:
+            print('Could not load snap 1 KD tree - generating')
+            treefile1.close()
+            gen1=True
+            pass
+    else:
+        gen1=True
+
+    if os.path.exists(treefname2):
+        logging.info('Loading existing KDTree for snap 2...')
+        treefile1=open(treefname2,'rb')
+        try:
+            kdtree_snap2_periodic=pickle.load(treefile2)
+            treefile2.close()
+            gen2=False
+        except:
+            print('Could not load snap 2 KD tree - generating')
+            treefile2.close()
+            gen2=True
+            pass
+    else:
+        gen2=True
+    
+    if gen1:
+        logging.info(f'Generating KDTree for snap 1... ')
+        kdtree_snap1_periodic= cKDTree(np.column_stack([particledata_snap1[f'Coordinates_{x}'] for x in 'xyz']),boxsize=boxsize)
+        treefile1=open(treefname1,'wb')
+        pickle.dump(kdtree_snap1_periodic,treefile1)
+        treefile1.close()
+    if gen2:
+        logging.info(f'Generating KDTree for snap 2... ')
+        kdtree_snap2_periodic= cKDTree(np.column_stack([particledata_snap2[f'Coordinates_{x}'] for x in 'xyz']),boxsize=boxsize)
+        treefile2=open(treefname2,'wb')
+        pickle.dump(kdtree_snap2_periodic,treefile2)
+        treefile2.close()
+
+    
+    #load catalogues into dataframes
+    catalogue_subhalo=pd.read_hdf('catalogues/catalogue_subhalo.hdf5',key='Subhalo')
+    catalogue_subhalo=catalogue_subhalo.loc[np.logical_or(catalogue_subhalo['snapshotidx']==snapidx2,catalogue_subhalo['snapshotidx']==snapidx1),:]
+
+    #select relevant subhaloes
+    snap2_mask=catalogue_subhalo[f'snapshotidx']==snapidx2
+    snap2_mass_mask=catalogue_subhalo[f'ApertureMeasurements/Mass/030kpc_4']>=10**mcut/10**10
+    snap2_com_mask_1=np.logical_and.reduce([catalogue_subhalo[f'CentreOfPotential_{x}']>=ixmin for x,ixmin in zip('xyz',[xmin,ymin,zmin])])
+    snap2_com_mask_2=np.logical_and.reduce([catalogue_subhalo[f'CentreOfPotential_{x}']<=ixmax for x,ixmax in zip('xyz',[xmax,ymax,zmax])])
+    snap2_com_mask=np.logical_and.reduce([snap2_com_mask_1,snap2_com_mask_2,snap2_mask,snap2_mass_mask])
+    numgal_subvolume=np.sum(snap2_com_mask);numgal_total=np.sum(np.logical_and(snap2_mask,snap2_mass_mask))
+    logging.info(f'Using {numgal_subvolume} of {numgal_total} valid galaxies from box')
+
+    #initialise output
+    initfields=['nodeIndex','GroupNumber','SubGroupNumber']
+    r200_facs_str=[f'{r200_fac:.3f}_R200' for r200_fac in r200_facs]
+    r200_facs_str=[r200_fac_str.replace(".",'p') for r200_fac_str in r200_facs_str]
+    rstar_facs_str=['30kpc']
+    keys=np.concatenate([r200_facs_str,rstar_facs_str])
+
+    nodeindex=catalogue_subhalo.loc[snap2_com_mask,'nodeIndex']
+    groupnums=catalogue_subhalo.loc[snap2_com_mask,'GroupNumber']
+    subgroupnums=catalogue_subhalo.loc[snap2_com_mask,'SubGroupNumber']
+
+    gasflow_df=pd.DataFrame(np.column_stack([nodeindex,groupnums,subgroupnums]),columns=initfields)
+    for key in keys:
+        gasflow_df.loc[:,'Inflow/'+key]=np.nan
+        gasflow_df.loc[:,'Outflow/'+key]=np.nan
+
+    success=[]
+    #Main halo loop
+    for iigalaxy,(igalaxy_snap2,galaxy_snap2) in enumerate(catalogue_subhalo.loc[snap2_com_mask,:].iterrows()):
+        progidx=galaxy_snap2['mainProgenitorIndex']
+        nodeidx=galaxy_snap2['nodeIndex']
+
+        #ensuring there has been a progenitor found
+        if np.sum(progidx==catalogue_subhalo['nodeIndex']):
+            pass           
+        else:
+            continue
+
+        galaxy_snap1=catalogue_subhalo.loc[progidx==catalogue_subhalo['nodeIndex'],:]
+        com_snap2=[galaxy_snap2[f"CentreOfPotential_{x}"] for x in 'xyz']
+        com_snap1=[galaxy_snap1[f"CentreOfPotential_{x}"].values[0] for x in 'xyz']
+
+        vcom_snap2=[galaxy_snap2[f"Velocity_{x}"] for x in 'xyz']
+        vcom_snap1=[galaxy_snap1[f"Velocity_{x}"].values[0] for x in 'xyz']
+
+        #select particles in halo-size sphere
+        hostradius=galaxy_snap2['Group_R_Crit200']
+        starhalfmassradius=galaxy_snap2['HalfMassRad_4']
+
+        part_idx_candidates_snap2=kdtree_snap2_periodic.query_ball_point(com_snap2,hostradius)
+        part_idx_candidates_snap1=kdtree_snap1_periodic.query_ball_point(com_snap1,hostradius)
+        part_IDs_candidates_all=np.unique(np.concatenate([particledata_snap2.loc[part_idx_candidates_snap2,"ParticleIDs"].values,particledata_snap1.loc[part_idx_candidates_snap1,"ParticleIDs"].values])).astype(np.int64)
+
+        part_idx_candidates_snap1=particledata_snap1['ParticleIDs'].searchsorted(part_IDs_candidates_all)
+        part_idx_candidates_snap2=particledata_snap2['ParticleIDs'].searchsorted(part_IDs_candidates_all)
+        part_data_candidates_snap1=particledata_snap1.loc[part_idx_candidates_snap1,:]
+        part_data_candidates_snap2=particledata_snap2.loc[part_idx_candidates_snap2,:]
+        
+        #needed if using subfind particle data
+        if True:
+            matches=part_data_candidates_snap2.loc[:,"ParticleIDs"].values==part_data_candidates_snap1.loc[:,"ParticleIDs"].values
+            matchrate=np.sum(matches)/len(matches)
+            if matchrate<0.9:
+                logging.info(f'Skipping galaxy {iigalaxy+1} of {numgal_subvolume} - poorly matched ({matchrate*100:.1f}%)')
+                logging.info('')
+                success.append(0)
+                continue
+            part_data_candidates_snap2=part_data_candidates_snap2.loc[matches,:]
+            part_data_candidates_snap1=part_data_candidates_snap1.loc[matches,:]
+
+        #adding rcom and vrad
+        part_data_candidates_snap2.loc[:,"r_com"]=np.sqrt(np.sum(np.square(np.column_stack([part_data_candidates_snap2.loc[:,f'Coordinates_{x}']-com_snap2[ix] for ix,x in enumerate('xyz')])),axis=1))#Mpc
+        part_data_candidates_snap2.loc[:,[f"runit_{x}rel" for x in 'xyz']]=np.column_stack([(part_data_candidates_snap2.loc[:,f'Coordinates_{x}']-com_snap2[ix])/part_data_candidates_snap2.loc[:,f'r_com'] for ix,x in enumerate('xyz')])
+        part_data_candidates_snap2.loc[:,[f"Velocity_{x}rel" for x in 'xyz']]=np.column_stack([part_data_candidates_snap2.loc[:,f'Velocity_{x}']-vcom_snap2[ix] for ix,x in enumerate('xyz')])
+        part_data_candidates_snap2.loc[:,"vrad_inst"]=np.sum(np.multiply(np.column_stack([part_data_candidates_snap2[f"Velocity_{x}rel"] for x in 'xyz']),np.column_stack([part_data_candidates_snap2[f"runit_{x}rel"] for x in 'xyz'])),axis=1)
+        part_data_candidates_snap1.loc[:,"r_com"]=np.sqrt(np.sum(np.square(np.column_stack([part_data_candidates_snap1.loc[:,f'Coordinates_{x}']-com_snap1[ix] for ix,x in enumerate('xyz')])),axis=1))#Mpc
+        part_data_candidates_snap1.loc[:,[f"runit_{x}rel" for x in 'xyz']]=np.column_stack([(part_data_candidates_snap1.loc[:,f'Coordinates_{x}']-com_snap1[ix])/part_data_candidates_snap1.loc[:,f'r_com'] for ix,x in enumerate('xyz')])
+        part_data_candidates_snap1.loc[:,[f"Velocity_{x}rel" for x in 'xyz']]=np.column_stack([part_data_candidates_snap1.loc[:,f'Velocity_{x}']-vcom_snap1[ix] for ix,x in enumerate('xyz')])
+        part_data_candidates_snap1.loc[:,"vrad_inst"]=np.sum(np.multiply(np.column_stack([part_data_candidates_snap1[f"Velocity_{x}rel"] for x in 'xyz']),np.column_stack([part_data_candidates_snap1[f"runit_{x}rel"] for x in 'xyz'])),axis=1)
+        part_data_candidates_snap2.loc[:,"vrad_ave"]=(part_data_candidates_snap2.loc[:,"r_com"].values-part_data_candidates_snap1.loc[:,"r_com"].values)/delta_lt*978.5#to km/s
+        part_data_candidates_snap1.loc[:,"vrad_ave"]=(part_data_candidates_snap2.loc[:,"r_com"].values-part_data_candidates_snap1.loc[:,"r_com"].values)/delta_lt*978.5#to km/s
+
+        #removing temporary data
+        for dset in np.concatenate([[f"runit_{x}rel" for x in 'xyz'],[f"Velocity_{x}rel" for x in 'xyz'],[f'Coordinates_{x}' for x in 'xyz'],[f'Velocity_{x}' for x in 'xyz']]):
+            del part_data_candidates_snap1[dset]
+            del part_data_candidates_snap2[dset]
+
+        #shells to use based on galaxy type
+        icen=galaxy_snap2['SubGroupNumber']==0
+        if icen: galaxy='Central'
+        else: galaxy='Satellite'
+        r200_radii=[r200_fac*hostradius for r200_fac in r200_facs]
+        rstar_radii=[0.03]
+        if icen:
+            radii=np.concatenate([r200_radii,rstar_radii])
+            radii_str=np.concatenate([r200_facs_str,rstar_facs_str])
+        else:
+            radii=rstar_radii
+            radii_str=rstar_facs_str
+
+        #for each of the spherical shells, calculate influx and outflow
+        for radius,radius_str in zip(radii,radii_str):
+            if 'R200' in radius_str:
+                ism_snap1=np.logical_and.reduce([part_data_candidates_snap1.loc[:,"r_com"].values<radius])
+                ism_snap2=np.logical_and.reduce([part_data_candidates_snap2.loc[:,"r_com"].values<radius])
+
+            else:
+                ism_snap2=np.logical_and.reduce([part_data_candidates_snap2.loc[:,"r_com"].values<radius,
+                                                    part_data_candidates_snap2.loc[:,"Temperature"].values<10**5,
+                                                    part_data_candidates_snap2.loc[:,"Density"].values>0.1/nh_conversion])
+                ism_snap1=np.logical_and.reduce([part_data_candidates_snap1.loc[:,"r_com"].values<radius,
+                                                    part_data_candidates_snap1.loc[:,"Temperature"].values<10**5,
+                                                    part_data_candidates_snap1.loc[:,"Density"].values>0.1/nh_conversion])
+
+            #new ism particles
+            ism_partidx_in=np.logical_and(np.logical_not(ism_snap1),ism_snap2)
+            #removed ism particles
+            ism_partidx_out=np.logical_and(ism_snap1,np.logical_not(ism_snap2))
+
+            #collect data
+            # inflow_particles_snap1=part_data_candidates_snap1.loc[ism_partidx_in,:]
+            # inflow_particles_snap2=part_data_candidates_snap2.loc[ism_partidx_in,:]
+            # outflow_particles_snap1=part_data_candidates_snap1.loc[ism_partidx_out,:]
+            # outflow_particles_snap2=part_data_candidates_snap2.loc[ism_partidx_out,:]
+
+            gasflow_df.loc[iigalaxy,'Inflow/'+radius_str]=np.sum(part_data_candidates_snap2.loc[ism_partidx_in,'Mass'])
+            gasflow_df.loc[iigalaxy,'Outflow/'+radius_str]=np.sum(part_data_candidates_snap2.loc[ism_partidx_out,'Mass'])
 
 
+            logging.info(f'Done with galaxy {iigalaxy+1} of {numgal_subvolume} for this subvolume')
+            logging.info('')
+            success.append(1)
 
+        logging.info(f'{np.sum(success):.0f} of {len(success):.0f} galaxies were successfully processed ({np.nanmean(success)*100:.1f}%)')
 
+        output_fname=f'catalogues/gasflow/gasflow_snapidx_{snapidx}_n_{str(nvol).zfill(2)}_volume_{ivol}.hdf5'
+        if os.path.exists(output_fname):
+            os.remove(output_fname)
+
+        gasflow_df.to_hdf(output_fname,key='Flux')
+
+        
