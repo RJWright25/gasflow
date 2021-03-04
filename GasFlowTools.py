@@ -736,7 +736,7 @@ def combine_catalogues(nvol,snapidxmin=0):
     outname='catalogues/catalogue_gasflow.hdf5'
     catalogue_subhalo=pd.read_hdf('catalogues/catalogue_subhalo.hdf5',key='Subhalo')
     snapidxs=catalogue_subhalo['snapshotidx'].unique();snapidxs=snapidxs[np.where(snapidxs>=snapidxmin)]
-    catalogue_subhalo=catalogue_subhalo.loc[np.logical_or.reduce([catalogue_subhalo['snipshotidx']==snapidx for snapidx in snapidxs]),:]
+    catalogue_subhalo=catalogue_subhalo.loc[np.logical_or.reduce([catalogue_subhalo['snapshotidx']==snapidx for snapidx in snapidxs]),:]
     catalogue_subhalo.reset_index()
     
     isub=0
@@ -748,7 +748,7 @@ def combine_catalogues(nvol,snapidxmin=0):
             except:
                 print(f'Could not load volume {ix}{iy}{iz}')
                 raise
-                continue
+                
 
             if isub==0:
                 accfile_data=accfile_data_file
