@@ -496,7 +496,7 @@ def analyse_gasflow(path,mcut,snapidx,nvol,ivol,snapidx_delta=1):
     particledata_snap2_star=pd.DataFrame(snapidx2_eagledata.read_dataset(4,'ParticleIDs'),columns=['ParticleIDs']);particledata_snap2_star.loc[:,"ParticleTypes"]=4;particledata_snap2_star.loc[:,"Temperature"]=np.nan;particledata_snap2_star.loc[:,"Density"]=np.nan
 
     logging.info(f'Reading gas datasets [runtime = {time.time()-t0:.2f}s]')
-    for dset in ['Coordinates','Velocity','Mass','Density','Temperature','Metallicity']:
+    for dset in ['Coordinates','Velocity','Mass','Density','Temperature','StarFormationRate','Metallicity']:
         dset_snap1=snapidx1_eagledata.read_dataset(0,dset)
         dset_snap2=snapidx2_eagledata.read_dataset(0,dset)
         if dset_snap2.shape[-1]==3:
