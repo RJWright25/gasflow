@@ -330,7 +330,7 @@ def match_tree(mcut,snapidxs=[]):
         os.remove('logs/match_tree.log')
 
     logging.basicConfig(filename='logs/match_tree.log', level=logging.INFO)
-    logging.info(f'Running tree matching for subhaloes with mass above {mcut*10**10:.1e} for snaps '+snapsidxs)
+    logging.info(f'Running tree matching for subhaloes with mass above {mcut*10**10:.1e} for snaps '+snapidxs)
 
     for field in fields_tree:
         catalogue_subhalo.loc[:,field]=-1
