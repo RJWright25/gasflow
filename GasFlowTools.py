@@ -738,10 +738,11 @@ def combine_catalogues(nvol,snapidxs=[]):
     catalogue_subhalo=catalogue_subhalo.loc[np.logical_or.reduce([catalogue_subhalo['snapshotidx']==snapidx for snapidx in snapidxs]),:]
     catalogue_subhalo.reset_index()
     
+    isub=0
     for snapidx in snapidxs:
-        isub=0
+        isub_snap=0
         for ivol in range(nvol**3):
-            print(f'Loading file {isub+1}/{nvol**3} for snap {snapidx}')
+            print(f'Loading file {isub_snap+1}/{nvol**3} for snap {snapidx}')
             try:
                 accfile_data_file=pd.read_hdf(f'catalogues/gasflow/gasflow_snapidx_{str(snapidx).zfill(3)}_n_{str(nvol).zfill(2)}_volume_{str(ivol).zfill(3)}.hdf5',key='Flux')
             except:
@@ -753,6 +754,8 @@ def combine_catalogues(nvol,snapidxs=[]):
                 accfile_data=accfile_data.append(accfile_data_file,ignore_index=True)
 
             isub+=1
+            isub_snap+=1
+
     ngal=accfile_data.shape[0]
     iigal=0
     for igal, gal in accfile_data.iterrows():
