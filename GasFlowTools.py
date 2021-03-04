@@ -732,4 +732,41 @@ def analyse_gasflow(path,mcut,snapidx,nvol,ivol,snapidx_delta=1,r200_facs=[0.075
     gasflow_df.to_hdf(output_fname,key='Flux')
     print(gasflow_df)
 
+def combine_catalogues(nvol,snapidxmin=0):
+    outname='catalogues/catalogue_gasflow.hdf5'
+    catalogue_subhalo=pd.read_hdf('catalogues/catalogue_subhalo.hdf5',key='Subhalo')
+    snapidxs=catalogue_subhalo['snapshotidx'].unique();snapidxs=snapidxs[np.where(snapidxs>=snapidxmin)]
+    catalogue_subhalo=catalogue_subhalo.loc[np.logical_or.reduce([catalogue_subhalo['snipshotidx']==snapidx for snapidx in snapidxs]),:]
+    catalogue_subhalo.reset_index()
+    
+    isub=0
+    for snapidx in snapidxs:
+        for ivol in range(nvol**3):
+            print(f'Loading file {isub+1}/{nvol**3}')
+            try:
+                accfile_data_file=pd.read_hdf(f'catalogues/gasflow/gasflow_snapidx_{str(snapidx).zfill(3)}_n_{str(nvol).zfill(2)}_volume_{str(ivol).zfill(3)}.hdf5',key='Flux')
+            except:
+                print(f'Could not load volume {ix}{iy}{iz}')
+                raise
+                continue
 
+            if isub==0:
+                accfile_data=accfile_data_file
+            else:
+                accfile_data=accfile_data.append(accfile_data_file,ignore_index=True)
+
+            isub+=1
+
+    iigal=0
+    for igal, gal in accfile_data.iterrows():
+        nodeidx=gal['nodeIndex']
+        match=nodeidx==catalogue_subhalo['nodeIndex']
+        accfields=list(accfile_data)[4:]
+        for accfield in accfields:
+            catalogue_subhalo.loc[match,accfield]=accfile_data.loc[igal,accfield]
+        iigal+=0
+
+    if os.path.exists(outname):
+        os.remove(outname)
+    
+    catalogue_subhalo.to_hdf(outname,key='Subhalo')
