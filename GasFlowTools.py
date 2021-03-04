@@ -754,7 +754,6 @@ def combine_catalogues(nvol,snapidxs=[]):
 
             isub+=1
     ngal=accfile_data.shape[0]
-    print(ngal)
     iigal=0
     for igal, gal in accfile_data.iterrows():
         if iigal%1000==0:
@@ -763,7 +762,7 @@ def combine_catalogues(nvol,snapidxs=[]):
         match=nodeidx==catalogue_subhalo['nodeIndex']
         accfields=list(accfile_data)
         catalogue_subhalo.loc[match,accfields]=gal.values
-        iigal+=0
+        iigal+=1
 
     if os.path.exists(outname):
         os.remove(outname)
