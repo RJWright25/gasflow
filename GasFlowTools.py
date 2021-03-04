@@ -732,23 +732,22 @@ def analyse_gasflow(path,mcut,snapidx,nvol,ivol,snapidx_delta=1,r200_facs=[0.075
     gasflow_df.to_hdf(output_fname,key='Flux')
     print(gasflow_df)
 
-def combine_catalogues(nvol,snapidxmin=0):
+def combine_catalogues(nvol,snapidxs=[]):
     outname='catalogues/catalogue_gasflow.hdf5'
     catalogue_subhalo=pd.read_hdf('catalogues/catalogue_subhalo.hdf5',key='Subhalo')
-    snapidxs=catalogue_subhalo['snapshotidx'].unique();snapidxs=snapidxs[np.where(snapidxs>=snapidxmin)]
     catalogue_subhalo=catalogue_subhalo.loc[np.logical_or.reduce([catalogue_subhalo['snapshotidx']==snapidx for snapidx in snapidxs]),:]
     catalogue_subhalo.reset_index()
     
-    isub=0
     for snapidx in snapidxs:
+        isub=0
         for ivol in range(nvol**3):
-            print(f'Loading file {isub+1}/{nvol**3}')
+            print(f'Loading file {isub+1}/{nvol**3} for snap {snapidx}')
             try:
                 accfile_data_file=pd.read_hdf(f'catalogues/gasflow/gasflow_snapidx_{str(snapidx).zfill(3)}_n_{str(nvol).zfill(2)}_volume_{str(ivol).zfill(3)}.hdf5',key='Flux')
             except:
                 print(f'Could not load volume {ivol}')
             
-            print(accfile_data_file)
+            print()
 
             if isub==0:
                 accfile_data=accfile_data_file
