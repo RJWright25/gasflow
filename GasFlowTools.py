@@ -747,7 +747,6 @@ def combine_catalogues(nvol,snapidxmin=0):
                 accfile_data_file=pd.read_hdf(f'catalogues/gasflow/gasflow_snapidx_{str(snapidx).zfill(3)}_n_{str(nvol).zfill(2)}_volume_{str(ivol).zfill(3)}.hdf5',key='Flux')
             except:
                 print(f'Could not load volume {ivol}')
-                raise
                 
 
             if isub==0:
