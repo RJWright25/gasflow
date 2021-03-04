@@ -635,7 +635,8 @@ def analyse_gasflow(path,mcut,snapidx,nvol,ivol,snapidx_delta=1):
         #select particles in halo-size sphere
         hostradius=(np.float(galaxy_snap2['Group_R_Crit200'])+np.float(galaxy_snap1['Group_R_Crit200']))/2
         hmsradius=(np.float(galaxy_snap2['HalfMassRad_4'])+np.float(galaxy_snap1['HalfMassRad_4']))/2
-
+        logging.info(hostradius)
+        logging.info(hmsradius)
         part_idx_candidates_snap2=kdtree_snap2_periodic.query_ball_point(com_snap2,hostradius)
         part_idx_candidates_snap1=kdtree_snap1_periodic.query_ball_point(com_snap1,hostradius)
         part_IDs_candidates_all=np.unique(np.concatenate([particledata_snap2.loc[part_idx_candidates_snap2,"ParticleIDs"].values,particledata_snap1.loc[part_idx_candidates_snap1,"ParticleIDs"].values])).astype(np.int64)
@@ -675,8 +676,8 @@ def analyse_gasflow(path,mcut,snapidx,nvol,ivol,snapidx_delta=1):
             del part_data_candidates_snap2[dset]
 
         #ism def
-        ism_snap1=np.logical_or(part_data_candidates_snap1["Density"].values>0.1,np.logical_and.reduce([part_data_candidates_snap1["r_com"].values<hmsradius*4,part_data_candidates_snap1["Temperature"].values<10**5,part_data_candidates_snap1["Density"].values*nh_conversion>0.01]))
-        ism_snap2=np.logical_or(part_data_candidates_snap2["Density"].values>0.1,np.logical_and.reduce([part_data_candidates_snap2["r_com"].values<hmsradius*4,part_data_candidates_snap2["Temperature"].values<10**5,part_data_candidates_snap2["Density"].values*nh_conversion>0.01]))
+        ism_snap1=part_data_candidates_snap1["r_com"].values<4*hmsradius
+        ism_snap2=part_data_candidates_snap2["r_com"].values<4*hmsradius
 
         #new ism particles
         ism_partidx_in=np.logical_and(np.logical_not(ism_snap1),ism_snap2)
