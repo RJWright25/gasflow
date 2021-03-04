@@ -747,7 +747,7 @@ def combine_catalogues(nvol,snapidxs=[]):
             except:
                 print(f'Could not load volume {ivol}')
             
-            print()
+            print(accfile_data_file)
 
             if isub==0:
                 accfile_data=accfile_data_file
@@ -755,9 +755,11 @@ def combine_catalogues(nvol,snapidxs=[]):
                 accfile_data=accfile_data.append(accfile_data_file,ignore_index=True)
 
             isub+=1
-
+    
     iigal=0
     for igal, gal in accfile_data.iterrows():
+        if not iigal%1000:
+            print(f'{iigal/accfile_data.shape[0]*100:.1f}% done with matching ...')
         nodeidx=gal['nodeIndex']
         match=nodeidx==catalogue_subhalo['nodeIndex']
         accfields=list(accfile_data)
