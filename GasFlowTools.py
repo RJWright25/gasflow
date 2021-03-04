@@ -492,8 +492,8 @@ def analyse_gasflow(path,mcut,snapidx,nvol,ivol,snapidx_delta=1):
     logging.info(f'Initialising particle data with IDs [runtime = {time.time()-t0:.2f}s]')
     particledata_snap1=pd.DataFrame(snapidx1_eagledata.read_dataset(0,'ParticleIDs'),columns=['ParticleIDs']);particledata_snap1.loc[:,"ParticleTypes"]=0
     particledata_snap2=pd.DataFrame(snapidx2_eagledata.read_dataset(0,'ParticleIDs'),columns=['ParticleIDs']);particledata_snap2.loc[:,"ParticleTypes"]=0
-    particledata_snap1_star=pd.DataFrame(snapidx1_eagledata.read_dataset(4,'ParticleIDs'),columns=['ParticleIDs']);particledata_snap1_star.loc[:,"ParticleTypes"]=4;particledata_snap1_star.loc[:,"Temperature"]=np.nan;particledata_snap1_star.loc[:,"Density"]=np.nan
-    particledata_snap2_star=pd.DataFrame(snapidx2_eagledata.read_dataset(4,'ParticleIDs'),columns=['ParticleIDs']);particledata_snap2_star.loc[:,"ParticleTypes"]=4;particledata_snap2_star.loc[:,"Temperature"]=np.nan;particledata_snap2_star.loc[:,"Density"]=np.nan
+    particledata_snap1_star=pd.DataFrame(snapidx1_eagledata.read_dataset(4,'ParticleIDs'),columns=['ParticleIDs']);particledata_snap1_star.loc[:,"ParticleTypes"]=4;particledata_snap1_star.loc[:,"Temperature"]=-1.;particledata_snap1_star.loc[:,"Density"]=10**10
+    particledata_snap2_star=pd.DataFrame(snapidx2_eagledata.read_dataset(4,'ParticleIDs'),columns=['ParticleIDs']);particledata_snap2_star.loc[:,"ParticleTypes"]=4;particledata_snap2_star.loc[:,"Temperature"]=-1.;particledata_snap2_star.loc[:,"Density"]=10**10
 
     logging.info(f'Reading gas datasets [runtime = {time.time()-t0:.2f}s]')
     for dset in ['Coordinates','Velocity','Mass','Density','Temperature','Metallicity']:
@@ -675,8 +675,8 @@ def analyse_gasflow(path,mcut,snapidx,nvol,ivol,snapidx_delta=1):
             del part_data_candidates_snap2[dset]
 
         #ism def
-        ism_snap1=np.logical_or(part_data_candidates_snap1["Density"].values>1,np.logical_and.reduce([part_data_candidates_snap1["r_com"].values<hmsradius*4,part_data_candidates_snap1["Temperature"].values<10**5,part_data_candidates_snap1["Density"].values*nh_conversion>0.1]))
-        ism_snap2=np.logical_or(part_data_candidates_snap2["Density"].values>1,np.logical_and.reduce([part_data_candidates_snap2["r_com"].values<hmsradius*4,part_data_candidates_snap2["Temperature"].values<10**5,part_data_candidates_snap2["Density"].values*nh_conversion>0.1]))
+        ism_snap1=np.logical_or(part_data_candidates_snap1["Density"].values>0.1,np.logical_and.reduce([part_data_candidates_snap1["r_com"].values<hmsradius*4,part_data_candidates_snap1["Temperature"].values<10**5,part_data_candidates_snap1["Density"].values*nh_conversion>0.01]))
+        ism_snap2=np.logical_or(part_data_candidates_snap2["Density"].values>0.1,np.logical_and.reduce([part_data_candidates_snap2["r_com"].values<hmsradius*4,part_data_candidates_snap2["Temperature"].values<10**5,part_data_candidates_snap2["Density"].values*nh_conversion>0.01]))
 
         #new ism particles
         ism_partidx_in=np.logical_and(np.logical_not(ism_snap1),ism_snap2)
