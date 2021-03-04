@@ -22,7 +22,7 @@ def submit_function(function,arguments,memory,time):
         os.mkdir('logs')
 
     if function=='analyse_gasflow':
-        jobname=function+'_'+run+f"_n_{str(arguments['nvol']).zfill(2)}_volume_{str(arguments['ivol']).zfill(3)}"
+        jobname=function+'_'+run+f"_snapidx_{str(arguments['snapidx']).zfill(3)}_n_{str(arguments['nvol']).zfill(2)}_volume_{str(arguments['ivol']).zfill(3)}"
     else:
         jobname=function+'_'+run
     
