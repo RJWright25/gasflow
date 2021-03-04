@@ -622,6 +622,7 @@ def analyse_gasflow(path,mcut,snapidx,nvol,ivol,snapidx_delta=1):
         if np.sum(progidx==catalogue_subhalo['nodeIndex']):
             pass           
         else:
+            success.append(0)
             continue
 
         galaxy_snap1=catalogue_subhalo.loc[progidx==catalogue_subhalo['nodeIndex'],:]
