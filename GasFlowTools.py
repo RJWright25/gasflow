@@ -635,8 +635,7 @@ def analyse_gasflow(path,mcut,snapidx,nvol,ivol,snapidx_delta=1):
         #select particles in halo-size sphere
         hostradius=(np.float(galaxy_snap2['Group_R_Crit200'])+np.float(galaxy_snap1['Group_R_Crit200']))/2
         hmsradius=(np.float(galaxy_snap2['HalfMassRad_4'])+np.float(galaxy_snap1['HalfMassRad_4']))/2
-        logging.info(hostradius)
-        logging.info(hmsradius)
+
         part_idx_candidates_snap2=kdtree_snap2_periodic.query_ball_point(com_snap2,hostradius)
         part_idx_candidates_snap1=kdtree_snap1_periodic.query_ball_point(com_snap1,hostradius)
         part_IDs_candidates_all=np.unique(np.concatenate([particledata_snap2.loc[part_idx_candidates_snap2,"ParticleIDs"].values,particledata_snap1.loc[part_idx_candidates_snap1,"ParticleIDs"].values])).astype(np.int64)
