@@ -439,7 +439,7 @@ def ivol_idx(ivol,nvol):
     iy=int((ivol-ix*nvol**2-iz)/nvol)
     return (ix,iy,iz)
 
-def analyse_gasflow(path,mcut,snapidx,nvol,ivol,snapidx_delta=1,r200_facs=[0.075,0.15,0.50,1.0]):
+def analyse_gasflow(path,mcut,snapidx,nvol,ivol,snapidx_delta=1):
 
     ivol=int(ivol)
     ivol=str(ivol).zfill(3)
@@ -602,19 +602,12 @@ def analyse_gasflow(path,mcut,snapidx,nvol,ivol,snapidx_delta=1,r200_facs=[0.075
 
     #initialise output
     initfields=['nodeIndex','GroupNumber','SubGroupNumber']
-    r200_facs_str=[f'{r200_fac:.3f}_R200' for r200_fac in r200_facs]
-    r200_facs_str=[r200_fac_str.replace(".",'p') for r200_fac_str in r200_facs_str]
-    rstar_facs_str=['30kpc']
-    keys=np.concatenate([r200_facs_str,rstar_facs_str])
+    gasflow_df=catalogue_subhalo.loc[snap2_com_mask,initfields]
 
-    nodeindex=catalogue_subhalo.loc[snap2_com_mask,'nodeIndex']
-    groupnums=catalogue_subhalo.loc[snap2_com_mask,'GroupNumber']
-    subgroupnums=catalogue_subhalo.loc[snap2_com_mask,'SubGroupNumber']
-
-    gasflow_df=pd.DataFrame(np.column_stack([nodeindex,groupnums,subgroupnums]),columns=initfields)
-    for key in keys:
-        gasflow_df.loc[:,'Inflow/'+key]=np.nan
-        gasflow_df.loc[:,'Outflow/'+key]=np.nan
+    gasflow_df.loc[:,'Inflow-ISM']=np.nan
+    gasflow_df.loc[:,'Outflow-ISM']=np.nan
+    gasflow_df.loc[:,'Inflow-Halo']=np.nan
+    gasflow_df.loc[:,'Outflow-Halo']=np.nan
 
     success=[]
     #Main halo loop
@@ -636,8 +629,8 @@ def analyse_gasflow(path,mcut,snapidx,nvol,ivol,snapidx_delta=1,r200_facs=[0.075
         vcom_snap1=[galaxy_snap1[f"Velocity_{x}"].values[0] for x in 'xyz']
 
         #select particles in halo-size sphere
-        hostradius=galaxy_snap2['Group_R_Crit200']
-        starhalfmassradius=galaxy_snap2['HalfMassRad_4']
+        hostradius=(galaxy_snap2['Group_R_Crit200']+galaxy_snap1['Group_R_Crit200'])/2
+        hmsradius=(galaxy_snap2['HalfMassRad_4']+galaxy_snap1['HalfMassRad_4'])/2
 
         part_idx_candidates_snap2=kdtree_snap2_periodic.query_ball_point(com_snap2,hostradius)
         part_idx_candidates_snap1=kdtree_snap1_periodic.query_ball_point(com_snap1,hostradius)
@@ -677,49 +670,44 @@ def analyse_gasflow(path,mcut,snapidx,nvol,ivol,snapidx_delta=1,r200_facs=[0.075
             del part_data_candidates_snap1[dset]
             del part_data_candidates_snap2[dset]
 
-        #shells to use based on galaxy type
-        icen=galaxy_snap2['SubGroupNumber']==0
-        if icen: galaxy='Central'
-        else: galaxy='Satellite'
-        r200_radii=[r200_fac*hostradius for r200_fac in r200_facs]
-        rstar_radii=[0.03]
-        if icen:
-            radii=np.concatenate([r200_radii,rstar_radii])
-            radii_str=np.concatenate([r200_facs_str,rstar_facs_str])
+        #ism def
+        ism_snap1=np.logical_or(part_data_candidates_snap1.loc[:,"StarFormationRate"].values>0,
+                  np.logical_and.reduce([part_data_candidates_snap1.loc[:,"r_com"].values<hmsradius*4
+                                         part_data_candidates_snap1.loc[:,"Temperature"].values<10**5,
+                                         part_data_candidates_snap1.loc[:,"Density"].values*nh_conversion<0.1]))
+        
+        ism_snap2=np.logical_or(part_data_candidates_snap2.loc[:,"StarFormationRate"].values>0,
+                  np.logical_and.reduce([part_data_candidates_snap2.loc[:,"r_com"].values<hmsradius*4
+                                         part_data_candidates_snap2.loc[:,"Temperature"].values<10**5,
+                                         part_data_candidates_snap2.loc[:,"Density"].values*nh_conversion<0.1]))
+        
+        #new ism particles
+        ism_partidx_in=np.logical_and(np.logical_not(ism_snap1),ism_snap2)
+        #removed ism particles
+        ism_partidx_out=np.logical_and(ism_snap1,np.logical_not(ism_snap2)) 
+
+        gasflow_df.loc[iigalaxy,'Inflow-ISM']=np.sum(part_data_candidates_snap2.loc[ism_partidx_in,'Mass'])
+        gasflow_df.loc[iigalaxy,'Outflow-ISM']=np.sum(part_data_candidates_snap2.loc[ism_partidx_out,'Mass'])
+
+        #halo def (if central)
+        if galaxy_snap2['SubGroupNumber']==0:
+            halo_snap1=np.logical_and.reduce([part_data_candidates_snap1.loc[:,"r_com"].values<hostradius])
+            halo_snap2=np.logical_and.reduce([part_data_candidates_snap2.loc[:,"r_com"].values<hostradius])
+            
+            #new halo particles
+            halo_partidx_in=np.logical_and(np.logical_not(halo_snap1),halo_snap2)
+            #removed halo particles
+            halo_partidx_out=np.logical_and(halo_snap1,np.logical_not(halo_snap2)) 
+            
+            #sum masses
+            gasflow_df.loc[iigalaxy,'Inflow-Halo']=np.sum(part_data_candidates_snap2.loc[halo_partidx_in,'Mass'])
+            gasflow_df.loc[iigalaxy,'Outflow-Halo']=np.sum(part_data_candidates_snap2.loc[halo_partidx_out,'Mass'])
+
+        if galaxy_snap2['SubGroupNumber']==0:
+            logging.info(f'Done with galaxy {iigalaxy+1} of {numgal_subvolume} for this subvolume - CENTRAL [runtime = {time.time()-t0:.2f}s]')
         else:
-            radii=rstar_radii
-            radii_str=rstar_facs_str
+            logging.info(f'Done with galaxy {iigalaxy+1} of {numgal_subvolume} for this subvolume - SATELLITE [runtime = {time.time()-t0:.2f}s]')
 
-        #for each of the spherical shells, calculate influx and outflow
-        for radius,radius_str in zip(radii,radii_str):
-            if 'R200' in radius_str:
-                ism_snap1=np.logical_and.reduce([part_data_candidates_snap1.loc[:,"r_com"].values<radius])
-                ism_snap2=np.logical_and.reduce([part_data_candidates_snap2.loc[:,"r_com"].values<radius])
-
-            else:
-                ism_snap2=np.logical_and.reduce([part_data_candidates_snap2.loc[:,"r_com"].values<radius,
-                                                    part_data_candidates_snap2.loc[:,"Temperature"].values<10**5,
-                                                    part_data_candidates_snap2.loc[:,"Density"].values>0.1/nh_conversion])
-                ism_snap1=np.logical_and.reduce([part_data_candidates_snap1.loc[:,"r_com"].values<radius,
-                                                    part_data_candidates_snap1.loc[:,"Temperature"].values<10**5,
-                                                    part_data_candidates_snap1.loc[:,"Density"].values>0.1/nh_conversion])
-
-            #new ism particles
-            ism_partidx_in=np.logical_and(np.logical_not(ism_snap1),ism_snap2)
-            #removed ism particles
-            ism_partidx_out=np.logical_and(ism_snap1,np.logical_not(ism_snap2))
-
-            #collect data
-            # inflow_particles_snap1=part_data_candidates_snap1.loc[ism_partidx_in,:]
-            # inflow_particles_snap2=part_data_candidates_snap2.loc[ism_partidx_in,:]
-            # outflow_particles_snap1=part_data_candidates_snap1.loc[ism_partidx_out,:]
-            # outflow_particles_snap2=part_data_candidates_snap2.loc[ism_partidx_out,:]
-
-            gasflow_df.loc[iigalaxy,'Inflow/'+radius_str]=np.sum(part_data_candidates_snap2.loc[ism_partidx_in,'Mass'])
-            gasflow_df.loc[iigalaxy,'Outflow/'+radius_str]=np.sum(part_data_candidates_snap2.loc[ism_partidx_out,'Mass'])
-
-
-        logging.info(f'Done with galaxy {iigalaxy+1} of {numgal_subvolume} for this subvolume [runtime = {time.time()-t0:.2f}s]')
         logging.info(f'')
         success.append(1)
 
