@@ -312,7 +312,7 @@ def extract_subhalo(path,mcut,snapidxmin=0,overwrite=True):
     except:
         data.to_hdf(f'catalogues/catalogue_subhalo-BACKUP.hdf5',key='Subhalo')
 
-def match_tree(mcut,snapidxmin=0):
+def match_tree(mcut,snapidxs=[]):
 
     outname='catalogues/catalogue_subhalo.hdf5'
     catalogue_subhalo=pd.read_hdf('catalogues/catalogue_subhalo.hdf5',key='Subhalo',mode='r')
@@ -337,12 +337,9 @@ def match_tree(mcut,snapidxmin=0):
 
     nsub_tot=catalogue_subhalo.shape[0]
 
-    snapidxs_subhalo=catalogue_subhalo['snapshotidx'].unique()
-    snapidxs_tomatch=snapidxs_subhalo[np.where(snapidxs_subhalo>=snapidxmin)]
-
     t0=time.time()
-    for isnap,snapidx in enumerate(snapidxs_tomatch):
-        logging.info(f'Processing snap {snapidx} ({isnap+1}/{len(snapidxs_tomatch)}) [runtime {time.time()-t0:.2f} sec]')
+    for isnap,snapidx in enumerate(snapidxs):
+        logging.info(f'Processing snap {snapidx} ({isnap+1}/{len(snapidxs)}) [runtime {time.time()-t0:.2f} sec]')
         snap_mass_mask=np.logical_and(catalogue_subhalo['snapshotidx']==snapidx,catalogue_subhalo['Mass']>mcut)
         snap_catalogue_subhalo=catalogue_subhalo.loc[snap_mass_mask,:]
         snap_tree_catalogue=catalogue_tree.loc[catalogue_tree['snapshotNumber']==snapidx,:]
@@ -362,7 +359,7 @@ def match_tree(mcut,snapidxmin=0):
                 pass
 
             if not iisub%100:
-                logging.info(f'Done matching {(iisub+1)/nsub_snap*100:.1f}% of subhaloes at snap {snapidx} ({isnap+1}/{len(snapidxs_tomatch)}) [runtime {time.time()-t0:.2f} sec]')
+                logging.info(f'Done matching {(iisub+1)/nsub_snap*100:.1f}% of subhaloes at snap {snapidx} ({isnap+1}/{len(snapidxs)}) [runtime {time.time()-t0:.2f} sec]')
 
             iisub+=1
         
@@ -372,7 +369,7 @@ def match_tree(mcut,snapidxmin=0):
     os.remove(outname)
     catalogue_subhalo.to_hdf(outname,key='Subhalo')
 
-def match_fof(mcut,snapidxmin=0):
+def match_fof(mcut,snapidxs=[]):
 
     outname='catalogues/catalogue_subhalo.hdf5'
     catalogue_subhalo=pd.read_hdf('catalogues/catalogue_subhalo.hdf5',key='Subhalo',mode='r')
@@ -392,13 +389,9 @@ def match_fof(mcut,snapidxmin=0):
 
     for field in fields_fof:
         catalogue_subhalo.loc[:,field]=-1
-
-    snapidxs_subhalo=catalogue_subhalo['snapshotidx'].unique()
-    snapidxs_tomatch=snapidxs_subhalo[np.where(snapidxs_subhalo>=snapidxmin)]
-
     t0=time.time()
-    for isnap,snapidx in enumerate(snapidxs_tomatch):
-        logging.info(f'Processing snap {snapidx} ({isnap+1}/{len(snapidxs_tomatch)}) [runtime {time.time()-t0:.2f} sec]')
+    for isnap,snapidx in enumerate(snapidxs):
+        logging.info(f'Processing snap {snapidx} ({isnap+1}/{len(snapidxs)}) [runtime {time.time()-t0:.2f} sec]')
         snap_mass_mask=np.logical_and(catalogue_subhalo['snapshotidx']==snapidx,catalogue_subhalo['Mass']>mcut)
         central_mask=np.logical_and.reduce([snap_mass_mask,catalogue_subhalo['SubGroupNumber']==0])
         snap_catalogue_subhalo=catalogue_subhalo.loc[snap_mass_mask,:]
