@@ -762,6 +762,7 @@ def combine_catalogues(nvol,snapidxs=[]):
             # print(f'{iigal/accfile_data.shape[0]*100:.1f}% done with matching ...')
         nodeidx=gal['nodeIndex']
         match=nodeidx==catalogue_subhalo['nodeIndex']
+        print(np.sum(match))
         accfields=list(accfile_data)
         accfields.remove('nodeIndex');accfields.remove('GroupNumber');accfields.remove('SubGroupNumber')
         for accfield in accfields:
