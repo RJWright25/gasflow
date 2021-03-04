@@ -607,7 +607,7 @@ def analyse_gasflow(path,mcut,snapidx,nvol,ivol,snapidx_delta=1):
     gasflow_df.loc[:,'Inflow-ISM']=np.nan
     gasflow_df.loc[:,'Outflow-ISM']=np.nan
 
-    r200_facs=[0.25,0.5,0.75,1]
+    r200_facs=[0.125,0.25,0.5,0.75,1]
     for fac in r200_facs:
         gasflow_df.loc[:,f'Inflow-{fac:.3f}R200']=np.nan
         gasflow_df.loc[:,f'Outflow-{fac:.3f}R200']=np.nan
