@@ -758,8 +758,8 @@ def combine_catalogues(nvol,snapidxs=[]):
     
     iigal=0
     for igal, gal in accfile_data.iterrows():
-        if not iigal%1000:
-            print(f'{iigal/accfile_data.shape[0]*100:.1f}% done with matching ...')
+        # if not iigal%1000:
+            # print(f'{iigal/accfile_data.shape[0]*100:.1f}% done with matching ...')
         nodeidx=gal['nodeIndex']
         match=nodeidx==catalogue_subhalo['nodeIndex']
         accfields=list(accfile_data)
