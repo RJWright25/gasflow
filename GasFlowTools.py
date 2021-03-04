@@ -674,16 +674,9 @@ def analyse_gasflow(path,mcut,snapidx,nvol,ivol,snapidx_delta=1):
             del part_data_candidates_snap2[dset]
 
         #ism def
-        ism_snap1=np.logical_or(part_data_candidates_snap1.loc[:,"StarFormationRate"].values>0,
-                  np.logical_and.reduce([part_data_candidates_snap1.loc[:,"r_com"].values<hmsradius*4,
-                                         part_data_candidates_snap1.loc[:,"Temperature"].values<10**5,
-                                         part_data_candidates_snap1.loc[:,"Density"].values*nh_conversion<0.1]))
-        
-        ism_snap2=np.logical_or(part_data_candidates_snap2.loc[:,"StarFormationRate"].values>0,
-                  np.logical_and.reduce([part_data_candidates_snap2.loc[:,"r_com"].values<hmsradius*4,
-                                         part_data_candidates_snap2.loc[:,"Temperature"].values<10**5,
-                                         part_data_candidates_snap2.loc[:,"Density"].values*nh_conversion<0.1]))
-        
+        ism_snap1=np.logical_or(part_data_candidates_snap1["StarFormationRate"].values>0,np.logical_and.reduce([part_data_candidates_snap1["r_com"].values<hmsradius*4,part_data_candidates_snap1["Temperature"].values<10**5,part_data_candidates_snap1["Density"].values*nh_conversion<0.1]))
+        ism_snap2=np.logical_or(part_data_candidates_snap2["StarFormationRate"].values>0,np.logical_and.reduce([part_data_candidates_snap2["r_com"].values<hmsradius*4,part_data_candidates_snap2["Temperature"].values<10**5,part_data_candidates_snap2["Density"].values*nh_conversion<0.1]))
+
         #new ism particles
         ism_partidx_in=np.logical_and(np.logical_not(ism_snap1),ism_snap2)
         #removed ism particles
@@ -695,8 +688,8 @@ def analyse_gasflow(path,mcut,snapidx,nvol,ivol,snapidx_delta=1):
         #halo def (if central)
         if galaxy_snap2['SubGroupNumber']==0:
             for fac in r200_facs:
-                halo_snap1=np.logical_and.reduce([part_data_candidates_snap1.loc[:,"r_com"].values<fac*hostradius])
-                halo_snap2=np.logical_and.reduce([part_data_candidates_snap2.loc[:,"r_com"].values<fac*hostradius])
+                halo_snap1=np.logical_and.reduce([part_data_candidates_snap1["r_com"].values<fac*hostradius])
+                halo_snap2=np.logical_and.reduce([part_data_candidates_snap2["r_com"].values<fac*hostradius])
                 
                 #new halo particles
                 halo_partidx_in=np.logical_and(np.logical_not(halo_snap1),halo_snap2)
