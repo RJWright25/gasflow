@@ -760,7 +760,8 @@ def combine_catalogues(nvol,snapidxmin=0):
     for igal, gal in accfile_data.iterrows():
         nodeidx=gal['nodeIndex']
         match=nodeidx==catalogue_subhalo['nodeIndex']
-        accfields=list(accfile_data)[4:]
+        accfields=list(accfile_data)
+        accfields.remove('nodeIndex');accfields.remove('GroupNumber');accfields.remove('SubGroupNumber')
         for accfield in accfields:
             catalogue_subhalo.loc[match,accfield]=accfile_data.loc[igal,accfield]
         iigal+=0
