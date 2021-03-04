@@ -676,8 +676,8 @@ def analyse_gasflow(path,mcut,snapidx,nvol,ivol,snapidx_delta=1):
             del part_data_candidates_snap2[dset]
 
         #ism def
-        ism_snap1=part_data_candidates_snap1["r_com"].values<4*hmsradius
-        ism_snap2=part_data_candidates_snap2["r_com"].values<4*hmsradius
+        ism_snap1=np.logical_or(part_data_candidates_snap1["r_com"].values<2*hmsradius,np.logical_and(part_data_candidates_snap1["Temperature"].values<10**5,part_data_candidates_snap1["Density"].values*nh_conversion>0.1))
+        ism_snap2=np.logical_or(part_data_candidates_snap2["r_com"].values<2*hmsradius,np.logical_and(part_data_candidates_snap2["Temperature"].values<10**5,part_data_candidates_snap2["Density"].values*nh_conversion>0.1))
 
         #new ism particles
         ism_partidx_in=np.logical_and(np.logical_not(ism_snap1),ism_snap2)
