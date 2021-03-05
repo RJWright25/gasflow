@@ -643,7 +643,7 @@ def analyse_gasflow(path,mcut,snapidx,nvol,ivol,snapidx_delta=1):
         if icen:
             candidate_radius=hostradius
         else:
-            candidate_radius=8*hmsradius
+            candidate_radius=10*hmsradius
 
         part_idx_candidates_snap2=kdtree_snap2_periodic.query_ball_point(com_snap2,candidate_radius)
         part_idx_candidates_snap1=kdtree_snap1_periodic.query_ball_point(com_snap1,candidate_radius)
