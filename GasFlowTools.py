@@ -750,6 +750,7 @@ def combine_catalogues(nvol,mcut,snapidxs=[]):
         nodeidx=gal['nodeIndex']
         match=nodeidx==catalogue_subhalo['nodeIndex']
         accfields=list(accfile_data)
+        print(gal.values)
         catalogue_subhalo.loc[match,accfields]=gal.values
         iigal+=1
 
