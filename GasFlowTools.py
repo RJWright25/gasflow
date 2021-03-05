@@ -432,6 +432,13 @@ def ivol_idx(ivol,nvol):
     iy=int((ivol-ix*nvol**2-iz)/nvol)
     return (ix,iy,iz)
 
+def tfloor(nh,norm=17235.477):
+    if nh>=10**-1:
+        T=norm*nh**(1/3)
+    else:
+        T=8000+np.zeros(np.shape(nh))
+    return T
+
 def analyse_gasflow(path,mcut,snapidx,nvol,ivol,snapidx_delta=1):
 
     ivol=int(ivol)
