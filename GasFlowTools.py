@@ -617,6 +617,11 @@ def analyse_gasflow(path,mcut,snapidx,nvol,ivol,snapidx_delta=1):
     for iigalaxy,(igalaxy_snap2,galaxy_snap2) in enumerate(catalogue_subhalo.loc[snap2_com_mask,:].iterrows()):
         progidx=galaxy_snap2['mainProgenitorIndex']
         nodeidx=galaxy_snap2['nodeIndex']
+        subgroupnumber=galaxy_snap2['SubGroupNumber']
+        if subgroupnumber==0:
+            icen=True
+        else:
+            icen=False
 
         #ensuring there has been a progenitor found
         if np.sum(progidx==catalogue_subhalo['nodeIndex']):
@@ -635,9 +640,13 @@ def analyse_gasflow(path,mcut,snapidx,nvol,ivol,snapidx_delta=1):
         #select particles in halo-size sphere
         hostradius=(np.float(galaxy_snap2['Group_R_Crit200'])+np.float(galaxy_snap1['Group_R_Crit200']))/2
         hmsradius=(np.float(galaxy_snap2['HalfMassRad_4'])+np.float(galaxy_snap1['HalfMassRad_4']))/2
+        if icen:
+            candidate_radius=hostradius
+        else:
+            candidate_radius=8*hmsradius
 
-        part_idx_candidates_snap2=kdtree_snap2_periodic.query_ball_point(com_snap2,hostradius)
-        part_idx_candidates_snap1=kdtree_snap1_periodic.query_ball_point(com_snap1,hostradius)
+        part_idx_candidates_snap2=kdtree_snap2_periodic.query_ball_point(com_snap2,candidate_radius)
+        part_idx_candidates_snap1=kdtree_snap1_periodic.query_ball_point(com_snap1,candidate_radius)
         part_IDs_candidates_all=np.unique(np.concatenate([particledata_snap2.loc[part_idx_candidates_snap2,"ParticleIDs"].values,particledata_snap1.loc[part_idx_candidates_snap1,"ParticleIDs"].values])).astype(np.int64)
 
         part_idx_candidates_snap1=particledata_snap1['ParticleIDs'].searchsorted(part_IDs_candidates_all)
@@ -658,25 +667,41 @@ def analyse_gasflow(path,mcut,snapidx,nvol,ivol,snapidx_delta=1):
             part_data_candidates_snap1=part_data_candidates_snap1.loc[matches,:]
 
         #adding rcom and vrad
-        part_data_candidates_snap2.loc[:,"r_com"]=np.sqrt(np.sum(np.square(np.column_stack([part_data_candidates_snap2.loc[:,f'Coordinates_{x}']-com_snap2[ix] for ix,x in enumerate('xyz')])),axis=1))#Mpc
-        part_data_candidates_snap2.loc[:,[f"runit_{x}rel" for x in 'xyz']]=np.column_stack([(part_data_candidates_snap2.loc[:,f'Coordinates_{x}']-com_snap2[ix])/part_data_candidates_snap2.loc[:,f'r_com'] for ix,x in enumerate('xyz')])
-        part_data_candidates_snap2.loc[:,[f"Velocity_{x}rel" for x in 'xyz']]=np.column_stack([part_data_candidates_snap2.loc[:,f'Velocity_{x}']-vcom_snap2[ix] for ix,x in enumerate('xyz')])
-        part_data_candidates_snap2.loc[:,"vrad_inst"]=np.sum(np.multiply(np.column_stack([part_data_candidates_snap2[f"Velocity_{x}rel"] for x in 'xyz']),np.column_stack([part_data_candidates_snap2[f"runit_{x}rel"] for x in 'xyz'])),axis=1)
-        part_data_candidates_snap1.loc[:,"r_com"]=np.sqrt(np.sum(np.square(np.column_stack([part_data_candidates_snap1.loc[:,f'Coordinates_{x}']-com_snap1[ix] for ix,x in enumerate('xyz')])),axis=1))#Mpc
-        part_data_candidates_snap1.loc[:,[f"runit_{x}rel" for x in 'xyz']]=np.column_stack([(part_data_candidates_snap1.loc[:,f'Coordinates_{x}']-com_snap1[ix])/part_data_candidates_snap1.loc[:,f'r_com'] for ix,x in enumerate('xyz')])
-        part_data_candidates_snap1.loc[:,[f"Velocity_{x}rel" for x in 'xyz']]=np.column_stack([part_data_candidates_snap1.loc[:,f'Velocity_{x}']-vcom_snap1[ix] for ix,x in enumerate('xyz')])
-        part_data_candidates_snap1.loc[:,"vrad_inst"]=np.sum(np.multiply(np.column_stack([part_data_candidates_snap1[f"Velocity_{x}rel"] for x in 'xyz']),np.column_stack([part_data_candidates_snap1[f"runit_{x}rel"] for x in 'xyz'])),axis=1)
-        part_data_candidates_snap2.loc[:,"vrad_ave"]=(part_data_candidates_snap2.loc[:,"r_com"].values-part_data_candidates_snap1.loc[:,"r_com"].values)/delta_lt*978.5#to km/s
-        part_data_candidates_snap1.loc[:,"vrad_ave"]=(part_data_candidates_snap2.loc[:,"r_com"].values-part_data_candidates_snap1.loc[:,"r_com"].values)/delta_lt*978.5#to km/s
+        part_data_candidates_snap2["r_com"]=np.sqrt(np.sum(np.square(np.column_stack([part_data_candidates_snap2[f'Coordinates_{x}']-com_snap2[ix] for ix,x in enumerate('xyz')])),axis=1))#Mpc
+        # part_data_candidates_snap2.loc[:,[f"runit_{x}rel" for x in 'xyz']]=np.column_stack([(part_data_candidates_snap2[f'Coordinates_{x}']-com_snap2[ix])/part_data_candidates_snap2[f'r_com'] for ix,x in enumerate('xyz')])
+        # part_data_candidates_snap2.loc[:,[f"Velocity_{x}rel" for x in 'xyz']]=np.column_stack([part_data_candidates_snap2[f'Velocity_{x}']-vcom_snap2[ix] for ix,x in enumerate('xyz')])
+        # part_data_candidates_snap2["vrad_inst"]=np.sum(np.multiply(np.column_stack([part_data_candidates_snap2[f"Velocity_{x}rel"] for x in 'xyz']),np.column_stack([part_data_candidates_snap2[f"runit_{x}rel"] for x in 'xyz'])),axis=1)
+        # part_data_candidates_snap1["r_com"]=np.sqrt(np.sum(np.square(np.column_stack([part_data_candidates_snap1[f'Coordinates_{x}']-com_snap1[ix] for ix,x in enumerate('xyz')])),axis=1))#Mpc
+        # part_data_candidates_snap1.loc[:,[f"runit_{x}rel" for x in 'xyz']]=np.column_stack([(part_data_candidates_snap1[f'Coordinates_{x}']-com_snap1[ix])/part_data_candidates_snap1[f'r_com'] for ix,x in enumerate('xyz')])
+        # part_data_candidates_snap1.loc[:,[f"Velocity_{x}rel" for x in 'xyz']]=np.column_stack([part_data_candidates_snap1[f'Velocity_{x}']-vcom_snap1[ix] for ix,x in enumerate('xyz')])
+        # part_data_candidates_snap1["vrad_inst"]=np.sum(np.multiply(np.column_stack([part_data_candidates_snap1[f"Velocity_{x}rel"] for x in 'xyz']),np.column_stack([part_data_candidates_snap1[f"runit_{x}rel"] for x in 'xyz'])),axis=1)
+        # part_data_candidates_snap2["vrad_ave"]=(part_data_candidates_snap2["r_com"].values-part_data_candidates_snap1["r_com"].values)/delta_lt*978.5#to km/s
+        # part_data_candidates_snap1["vrad_ave"]=(part_data_candidates_snap2["r_com"].values-part_data_candidates_snap1["r_com"].values)/delta_lt*978.5#to km/s
 
         #removing temporary data
-        for dset in np.concatenate([[f"runit_{x}rel" for x in 'xyz'],[f"Velocity_{x}rel" for x in 'xyz'],[f'Coordinates_{x}' for x in 'xyz'],[f'Velocity_{x}' for x in 'xyz']]):
-            del part_data_candidates_snap1[dset]
-            del part_data_candidates_snap2[dset]
+        # for dset in np.concatenate([[f"runit_{x}rel" for x in 'xyz'],[f"Velocity_{x}rel" for x in 'xyz'],[f'Coordinates_{x}' for x in 'xyz'],[f'Velocity_{x}' for x in 'xyz']]):
+        #     del part_data_candidates_snap1[dset]
+        #     del part_data_candidates_snap2[dset]
 
-        #ism def
-        ism_snap1=np.logical_or(part_data_candidates_snap1["r_com"].values<2*hmsradius,np.logical_and(part_data_candidates_snap1["Temperature"].values<10**5,part_data_candidates_snap1["Density"].values*nh_conversion>0.1))
-        ism_snap2=np.logical_or(part_data_candidates_snap2["r_com"].values<2*hmsradius,np.logical_and(part_data_candidates_snap2["Temperature"].values<10**5,part_data_candidates_snap2["Density"].values*nh_conversion>0.1))
+        #sfr criterion
+        part_data_candidates_snap1["starforming-ism"]=np.logical_and.reduce([part_data_candidates_snap1["Density"].values*nh_conversion>=0.1*(part_data_candidates_snap1["Metallicity"].values)**(-0.64),
+                                                                             part_data_candidates_snap1["Temperature"].values<=tfloor(part_data_candidates_snap1["Density"].values)*10**0.5,
+                                                                             part_data_candidates_snap1["r_com"].values<=8*hmsradius]).astype(int)
+
+        part_data_candidates_snap2["starforming-ism"]=np.logical_and.reduce([part_data_candidates_snap2["Density"].values*nh_conversion>=0.1*(part_data_candidates_snap2["Metallicity"].values)**(-0.64),
+                                                                             part_data_candidates_snap2["Temperature"].values<=tfloor(part_data_candidates_snap2["Density"].values)*10**0.5,
+                                                                             part_data_candidates_snap2["r_com"].values<=8*hmsradius]).astype(int)
+        #atomic phase
+        part_data_candidates_snap1["atomic-ism"]=np.logical_and.reduce([part_data_candidates_snap1["Density"].values*nh_conversion>=0.01,
+                                                                             part_data_candidates_snap1["Temperature"].values<=tfloor(part_data_candidates_snap1["Density"].values)*10**0.5,
+                                                                             part_data_candidates_snap1["r_com"].values<=4*hmsradius]).astype(int)
+
+        part_data_candidates_snap2["atomic-ism"]=np.logical_and.reduce([part_data_candidates_snap2["Density"].values*nh_conversion>=0.01,
+                                                                             part_data_candidates_snap2["Temperature"].values<=tfloor(part_data_candidates_snap2["Density"].values)*10**0.5,
+                                                                             part_data_candidates_snap2["r_com"].values<=4*hmsradius]).astype(int)
+        #ism def - star forming at all within 8 hms or atomic within 4 hms
+        ism_snap1=np.logical_or(part_data_candidates_snap1["starforming-ism"].values,part_data_candidates_snap1["atomic-ism"].values)
+        ism_snap2=np.logical_or(part_data_candidates_snap2["starforming-ism"].values,part_data_candidates_snap2["atomic-ism"].values)
 
         #new ism particles
         ism_partidx_in=np.logical_and(np.logical_not(ism_snap1),ism_snap2)
@@ -687,7 +712,7 @@ def analyse_gasflow(path,mcut,snapidx,nvol,ivol,snapidx_delta=1):
         gasflow_df.loc[igalaxy_snap2,'Outflow-ISM']=np.sum(part_data_candidates_snap2.loc[ism_partidx_out,'Mass'])
 
         #halo def (if central)
-        if galaxy_snap2['SubGroupNumber']==0:
+        if icen:
             for fac in r200_facs:
                 halo_snap1=np.logical_and.reduce([part_data_candidates_snap1["r_com"].values<fac*hostradius])
                 halo_snap2=np.logical_and.reduce([part_data_candidates_snap2["r_com"].values<fac*hostradius])
@@ -701,7 +726,7 @@ def analyse_gasflow(path,mcut,snapidx,nvol,ivol,snapidx_delta=1):
                 gasflow_df.loc[igalaxy_snap2,f'Inflow-{fac:.3f}R200']=np.sum(part_data_candidates_snap2.loc[halo_partidx_in,'Mass'])
                 gasflow_df.loc[igalaxy_snap2,f'Outflow-{fac:.3f}R200']=np.sum(part_data_candidates_snap2.loc[halo_partidx_out,'Mass'])
 
-        if galaxy_snap2['SubGroupNumber']==0:
+        if icen:
             logging.info(f'Done with galaxy {iigalaxy+1} of {numgal_subvolume} for this subvolume - CENTRAL [runtime = {time.time()-t0:.2f}s]')
         else:
             logging.info(f'Done with galaxy {iigalaxy+1} of {numgal_subvolume} for this subvolume - SATELLITE [runtime = {time.time()-t0:.2f}s]')
