@@ -332,9 +332,6 @@ def match_tree(mcut,snapidxs=[]):
     logging.basicConfig(filename='logs/match_tree.log', level=logging.INFO)
     logging.info(f'Running tree matching for subhaloes with mass above {mcut*10**10:.1e} for {len(snapidxs)} snaps ')
 
-    for field in fields_tree:
-        catalogue_subhalo.loc[:,field]=-1
-
     nsub_tot=catalogue_subhalo.shape[0]
 
     t0=time.time()
@@ -342,6 +339,8 @@ def match_tree(mcut,snapidxs=[]):
         logging.info(f'Processing snap {snapidx} ({isnap+1}/{len(snapidxs)}) [runtime {time.time()-t0:.2f} sec]')
         snap_mass_mask=np.logical_and(catalogue_subhalo['snapshotidx']==snapidx,catalogue_subhalo['Mass']>mcut)
         snap_catalogue_subhalo=catalogue_subhalo.loc[snap_mass_mask,:]
+        for field in fields_tree:
+            snap_catalogue_subhalo.loc[:,field]=-1
         snap_tree_catalogue=catalogue_tree.loc[catalogue_tree['snapshotNumber']==snapidx,:]
         snap_tree_coms=snap_tree_catalogue.loc[:,[f'position_{x}' for x in 'xyz']].values
 
