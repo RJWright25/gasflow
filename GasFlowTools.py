@@ -741,7 +741,6 @@ def combine_catalogues(nvol,mcut,snapidxs=[]):
             print(f'{iigal/ngal*100:.1f}% done with matching ...')
         nodeidx=gal['nodeIndex']
         match=nodeidx==catalogue_subhalo['nodeIndex']
-        print(np.sum(match))
         accfields=list(accfile_data)
         catalogue_subhalo.loc[match,accfields]=gal.values
         iigal+=1
