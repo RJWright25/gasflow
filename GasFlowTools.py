@@ -642,7 +642,7 @@ def analyse_gasflow(path,mcut,snapidx,nvol,ivol,snapidx_delta=1):
         if icen:
             candidate_radius=hostradius
         else:
-            candidate_radius=10*hmsradius
+            candidate_radius=12*hmsradius
 
         part_idx_candidates_snap2=kdtree_snap2_periodic.query_ball_point(com_snap2,candidate_radius)
         part_idx_candidates_snap1=kdtree_snap1_periodic.query_ball_point(com_snap1,candidate_radius)
@@ -686,19 +686,19 @@ def analyse_gasflow(path,mcut,snapidx,nvol,ivol,snapidx_delta=1):
         #sfr criterion
         part_data_candidates_snap1["starforming-ism"]=np.logical_and.reduce([part_data_candidates_snap1["Density"].values*nh_conversion>=0.1*(part_data_candidates_snap1["Metallicity"].values)**(-0.64),
                                                                              part_data_candidates_snap1["Temperature"].values<=tfloor(part_data_candidates_snap1["Density"].values)*10**0.5,
-                                                                             part_data_candidates_snap1["r_com"].values<=8*hmsradius]).astype(int)
+                                                                             part_data_candidates_snap1["r_com"].values<=12*hmsradius]).astype(int)
 
         part_data_candidates_snap2["starforming-ism"]=np.logical_and.reduce([part_data_candidates_snap2["Density"].values*nh_conversion>=0.1*(part_data_candidates_snap2["Metallicity"].values)**(-0.64),
                                                                              part_data_candidates_snap2["Temperature"].values<=tfloor(part_data_candidates_snap2["Density"].values)*10**0.5,
-                                                                             part_data_candidates_snap2["r_com"].values<=8*hmsradius]).astype(int)
+                                                                             part_data_candidates_snap2["r_com"].values<=12*hmsradius]).astype(int)
         #atomic phase
         part_data_candidates_snap1["atomic-ism"]=np.logical_and.reduce([part_data_candidates_snap1["Density"].values*nh_conversion>=0.01,
                                                                              part_data_candidates_snap1["Temperature"].values<=tfloor(part_data_candidates_snap1["Density"].values)*10**0.5,
-                                                                             part_data_candidates_snap1["r_com"].values<=4*hmsradius]).astype(int)
+                                                                             part_data_candidates_snap1["r_com"].values<=8*hmsradius]).astype(int)
 
         part_data_candidates_snap2["atomic-ism"]=np.logical_and.reduce([part_data_candidates_snap2["Density"].values*nh_conversion>=0.01,
                                                                              part_data_candidates_snap2["Temperature"].values<=tfloor(part_data_candidates_snap2["Density"].values)*10**0.5,
-                                                                             part_data_candidates_snap2["r_com"].values<=4*hmsradius]).astype(int)
+                                                                             part_data_candidates_snap2["r_com"].values<=8*hmsradius]).astype(int)
         #ism def - star forming at all within 8 hms or atomic within 4 hms
         ism_snap1=np.logical_or(part_data_candidates_snap1["starforming-ism"].values,part_data_candidates_snap1["atomic-ism"].values)
         ism_snap2=np.logical_or(part_data_candidates_snap2["starforming-ism"].values,part_data_candidates_snap2["atomic-ism"].values)
