@@ -432,7 +432,7 @@ def ivol_idx(ivol,nvol):
     iy=int((ivol-ix*nvol**2-iz)/nvol)
     return (ix,iy,iz)
 
-def tfloor(nh,norm=17235.477):
+def tfloor(nh,norm=17235.4775202):
     if nh>=10**-1:
         T=norm*nh**(1/3)
     else:
