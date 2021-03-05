@@ -384,7 +384,7 @@ def match_fof(mcut,snapidxs=[]):
         os.remove('logs/match_fof.log')
 
     logging.basicConfig(filename='logs/match_fof.log', level=logging.INFO)
-    logging.info(f'Running FOF matching for subhaloes with mass above {mcut*10**10:.1e} after (and including) snapidx {snapidxmin} ...')
+    logging.info(f'Running FOF matching for subhaloes with mass above {mcut*10**10:.1e} for {len(snapidxs)} snaps ...')
 
     
     t0=time.time()
