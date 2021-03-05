@@ -670,10 +670,11 @@ def analyse_gasflow(path,mcut,snapidx,nvol,ivol,snapidx_delta=1):
         # part_data_candidates_snap2.loc[:,[f"runit_{x}rel" for x in 'xyz']]=np.column_stack([(part_data_candidates_snap2[f'Coordinates_{x}']-com_snap2[ix])/part_data_candidates_snap2[f'r_com'] for ix,x in enumerate('xyz')])
         # part_data_candidates_snap2.loc[:,[f"Velocity_{x}rel" for x in 'xyz']]=np.column_stack([part_data_candidates_snap2[f'Velocity_{x}']-vcom_snap2[ix] for ix,x in enumerate('xyz')])
         # part_data_candidates_snap2["vrad_inst"]=np.sum(np.multiply(np.column_stack([part_data_candidates_snap2[f"Velocity_{x}rel"] for x in 'xyz']),np.column_stack([part_data_candidates_snap2[f"runit_{x}rel"] for x in 'xyz'])),axis=1)
-        # part_data_candidates_snap1["r_com"]=np.sqrt(np.sum(np.square(np.column_stack([part_data_candidates_snap1[f'Coordinates_{x}']-com_snap1[ix] for ix,x in enumerate('xyz')])),axis=1))#Mpc
+        part_data_candidates_snap1.loc[:,"r_com"]=np.sqrt(np.sum(np.square(np.column_stack([part_data_candidates_snap1[f'Coordinates_{x}']-com_snap1[ix] for ix,x in enumerate('xyz')])),axis=1))#Mpc
         # part_data_candidates_snap1.loc[:,[f"runit_{x}rel" for x in 'xyz']]=np.column_stack([(part_data_candidates_snap1[f'Coordinates_{x}']-com_snap1[ix])/part_data_candidates_snap1[f'r_com'] for ix,x in enumerate('xyz')])
         # part_data_candidates_snap1.loc[:,[f"Velocity_{x}rel" for x in 'xyz']]=np.column_stack([part_data_candidates_snap1[f'Velocity_{x}']-vcom_snap1[ix] for ix,x in enumerate('xyz')])
         # part_data_candidates_snap1["vrad_inst"]=np.sum(np.multiply(np.column_stack([part_data_candidates_snap1[f"Velocity_{x}rel"] for x in 'xyz']),np.column_stack([part_data_candidates_snap1[f"runit_{x}rel"] for x in 'xyz'])),axis=1)
+        
         # part_data_candidates_snap2["vrad_ave"]=(part_data_candidates_snap2["r_com"].values-part_data_candidates_snap1["r_com"].values)/delta_lt*978.5#to km/s
         # part_data_candidates_snap1["vrad_ave"]=(part_data_candidates_snap2["r_com"].values-part_data_candidates_snap1["r_com"].values)/delta_lt*978.5#to km/s
 
