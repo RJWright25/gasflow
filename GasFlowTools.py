@@ -689,6 +689,8 @@ def analyse_gasflow(path,mcut,snapidx,nvol,ivol,snapidx_delta=1):
         #     del part_data_candidates_snap1[dset]
         #     del part_data_candidates_snap2[dset]
 
+        gas_snap1=part_data_candidates_snap1["ParticleTypes"].values==0
+
         #sfr criterion
         part_data_candidates_snap1["starforming-ism"]=np.logical_and.reduce([part_data_candidates_snap1["Density"].values*nh_conversion>=0.1*(part_data_candidates_snap1["Metallicity"].values)**(-0.64),
                                                                              part_data_candidates_snap1["Temperature"].values<=tfloor(part_data_candidates_snap1["Density"].values*nh_conversion)*10**0.5,
@@ -721,9 +723,9 @@ def analyse_gasflow(path,mcut,snapidx,nvol,ivol,snapidx_delta=1):
         ism_snap2=np.logical_or(part_data_candidates_snap2["starforming-ism"].values,part_data_candidates_snap2["atomic-ism"].values)
 
         #new ism particles
-        ism_partidx_in=np.logical_and(np.logical_not(ism_snap1),ism_snap2)
+        ism_partidx_in=np.logical_and.reduce([np.logical_not(ism_snap1),ism_snap2,gas_snap1])
         #removed ism particles
-        ism_partidx_out=np.logical_and(ism_snap1,np.logical_not(ism_snap2)) 
+        ism_partidx_out=np.logical_and.reduce([ism_snap1,np.logical_not(ism_snap2),gas_snap1])
 
         gasflow_df.loc[igalaxy_snap2,'Inflow-ISM']=np.sum(part_data_candidates_snap2.loc[ism_partidx_in,'Mass'])
         gasflow_df.loc[igalaxy_snap2,'Outflow-ISM']=np.sum(part_data_candidates_snap2.loc[ism_partidx_out,'Mass'])
