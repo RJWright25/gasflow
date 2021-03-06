@@ -434,7 +434,8 @@ def ivol_idx(ivol,nvol):
 
 def tfloor(nh,norm=17235.4775202):
     T=np.zeros(np.shape(nh))+8000
-    T[np.where(nh>=10**-1)]=norm*nh**(1/3)
+    dense=np.where(nh>=10**-1)
+    T[dense]=norm*nh[dense]**(1/3)
 
     return T
 
