@@ -450,6 +450,11 @@ def analyse_gasflow(path,mcut,snapidx,nvol,ivol,snapidx_delta=1):
         os.remove(logfile)
     logging.basicConfig(filename=logfile, level=logging.INFO)
 
+    output_fname=f'catalogues/gasflow/gasflow_snapidx_{snapidx}_n_{str(nvol).zfill(2)}_volume_{ivol}.hdf5'
+    if os.path.exists(output_fname):
+        os.remove(output_fname)
+
+        
     #background data for calc
     redshift_table=pd.read_hdf('snapshot_redshifts.hdf5',key='snapshots')
 
@@ -736,9 +741,6 @@ def analyse_gasflow(path,mcut,snapidx,nvol,ivol,snapidx_delta=1):
 
     logging.info(f'{np.sum(success):.0f} of {len(success):.0f} galaxies were successfully processed ({np.nanmean(success)*100:.1f}%) [runtime = {time.time()-t0:.2f}s]')
 
-    output_fname=f'catalogues/gasflow/gasflow_snapidx_{snapidx}_n_{str(nvol).zfill(2)}_volume_{ivol}.hdf5'
-    if os.path.exists(output_fname):
-        os.remove(output_fname)
 
     gasflow_df.to_hdf(output_fname,key='Flux')
     print(gasflow_df)
