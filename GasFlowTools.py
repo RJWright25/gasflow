@@ -690,12 +690,12 @@ def analyse_gasflow(path,mcut,snapidx,nvol,ivol,snapidx_delta=1):
 
         #sfr criterion
         part_data_candidates_snap1["starforming-ism"]=np.logical_and.reduce([part_data_candidates_snap1["Density"].values*nh_conversion>=0.1*(part_data_candidates_snap1["Metallicity"].values)**(-0.64),
-                                                                             part_data_candidates_snap1["Temperature"].values<=tfloor(part_data_candidates_snap1["Density"].values)*10**0.5,
-                                                                             part_data_candidates_snap1["r_com"].values<=6*hmsradius]).astype(int)
+                                                                             part_data_candidates_snap1["Temperature"].values<=tfloor(part_data_candidates_snap1["Density"].values*nh_conversion)*10**0.5,
+                                                                             part_data_candidates_snap1["r_com"].values<=8*hmsradius]).astype(int)
 
         part_data_candidates_snap2["starforming-ism"]=np.logical_and.reduce([part_data_candidates_snap2["Density"].values*nh_conversion>=0.1*(part_data_candidates_snap2["Metallicity"].values)**(-0.64),
-                                                                             part_data_candidates_snap2["Temperature"].values<=tfloor(part_data_candidates_snap2["Density"].values)*10**0.5,
-                                                                             part_data_candidates_snap2["r_com"].values<=6*hmsradius]).astype(int)
+                                                                             part_data_candidates_snap2["Temperature"].values<=tfloor(part_data_candidates_snap2["Density"].values*nh_conversion)*10**0.5,
+                                                                             part_data_candidates_snap2["r_com"].values<=8*hmsradius]).astype(int)
         print(nodeidx,subgroupnumber)
         print('sf ism')
         print(np.sum(part_data_candidates_snap1["starforming-ism"]))
@@ -703,11 +703,11 @@ def analyse_gasflow(path,mcut,snapidx,nvol,ivol,snapidx_delta=1):
 
         #atomic phase
         part_data_candidates_snap1["atomic-ism"]=np.logical_and.reduce([part_data_candidates_snap1["Density"].values*nh_conversion>=0.01,
-                                                                             part_data_candidates_snap1["Temperature"].values<=tfloor(part_data_candidates_snap1["Density"].values)*10**0.5,
+                                                                             part_data_candidates_snap1["Temperature"].values<=tfloor(part_data_candidates_snap1["Density"].values*nh_conversion)*10**0.5,
                                                                              part_data_candidates_snap1["r_com"].values<=4*hmsradius]).astype(int)
 
         part_data_candidates_snap2["atomic-ism"]=np.logical_and.reduce([part_data_candidates_snap2["Density"].values*nh_conversion>=0.01,
-                                                                             part_data_candidates_snap2["Temperature"].values<=tfloor(part_data_candidates_snap2["Density"].values)*10**0.5,
+                                                                             part_data_candidates_snap2["Temperature"].values<=tfloor(part_data_candidates_snap2["Density"].values*nh_conversion)*10**0.5,
                                                                              part_data_candidates_snap2["r_com"].values<=4*hmsradius]).astype(int)
         
         print('atomic ism')
