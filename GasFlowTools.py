@@ -454,7 +454,7 @@ def analyse_gasflow(path,mcut,snapidx,nvol,ivol,snapidx_delta=1):
     if os.path.exists(output_fname):
         os.remove(output_fname)
 
-        
+
     #background data for calc
     redshift_table=pd.read_hdf('snapshot_redshifts.hdf5',key='snapshots')
 
@@ -696,6 +696,10 @@ def analyse_gasflow(path,mcut,snapidx,nvol,ivol,snapidx_delta=1):
         part_data_candidates_snap2["starforming-ism"]=np.logical_and.reduce([part_data_candidates_snap2["Density"].values*nh_conversion>=0.1*(part_data_candidates_snap2["Metallicity"].values)**(-0.64),
                                                                              part_data_candidates_snap2["Temperature"].values<=tfloor(part_data_candidates_snap2["Density"].values)*10**0.5,
                                                                              part_data_candidates_snap2["r_com"].values<=6*hmsradius]).astype(int)
+
+        print(np.sum(part_data_candidates_snap1["starforming-ism"]))
+        print(np.sum(part_data_candidates_snap2["starforming-ism"]))
+
         #atomic phase
         part_data_candidates_snap1["atomic-ism"]=np.logical_and.reduce([part_data_candidates_snap1["Density"].values*nh_conversion>=0.01,
                                                                              part_data_candidates_snap1["Temperature"].values<=tfloor(part_data_candidates_snap1["Density"].values)*10**0.5,
@@ -704,6 +708,10 @@ def analyse_gasflow(path,mcut,snapidx,nvol,ivol,snapidx_delta=1):
         part_data_candidates_snap2["atomic-ism"]=np.logical_and.reduce([part_data_candidates_snap2["Density"].values*nh_conversion>=0.01,
                                                                              part_data_candidates_snap2["Temperature"].values<=tfloor(part_data_candidates_snap2["Density"].values)*10**0.5,
                                                                              part_data_candidates_snap2["r_com"].values<=4*hmsradius]).astype(int)
+        print(np.sum(part_data_candidates_snap1["atomic-ism"]))
+        print(np.sum(part_data_candidates_snap2["atomic-ism"]))
+        
+        
         #ism def - star forming at all within 8 hms or atomic within 4 hms
         ism_snap1=np.logical_or(part_data_candidates_snap1["starforming-ism"].values,part_data_candidates_snap1["atomic-ism"].values)
         ism_snap2=np.logical_or(part_data_candidates_snap2["starforming-ism"].values,part_data_candidates_snap2["atomic-ism"].values)
