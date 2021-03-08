@@ -469,7 +469,7 @@ def analyse_gasflow(path,mcut,snapidx,nvol,ivol,snapidx_delta=1):
         os.remove(logfile)
     logging.basicConfig(filename=logfile, level=logging.INFO)
 
-    output_fname=f'catalogues/gasflow/gasflow_snapidx_{snapidx}_delta_{str(snapidx_delta).zfill(3)}_n_{str(nvol).zfill(2)}_volume_{ivol}.hdf5'
+    output_fname=f'catalogues/gasflow/gasflow_snapidx_{snapidx}_delta_{str(snapidx_delta).zfill(3)}_n_{str(nvol).zfill(2)}_volume_{str(ivol).zfill(3)}.hdf5'
     if os.path.exists(output_fname):
         os.remove(output_fname)
 
