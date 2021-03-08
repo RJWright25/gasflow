@@ -813,7 +813,7 @@ def combine_catalogues(nvol,mcut,snapidxs=[],snapidx_delta=1):
         for ivol in range(nvol**3):
             print(f'Loading file {isub_snap+1}/{nvol**3} for snap {snapidx}')
             try:
-                accfile_data_file=pd.read_hdf(f'catalogues/gasflow/gasflow_snapidx_{str(snapidx).zfill(3)}_delta_{str(snapidx_delta).zfill(3)}_n_{str(nvol).zfill(2)}_volume_{str(ivol).zfill(3)}.hdf5',key='Flux')
+                accfile_data_file=pd.read_hdf(f'catalogues/gasflow/gasflow_snapidx_{snapidx}_delta_{str(snapidx_delta).zfill(3)}_n_{str(nvol).zfill(2)}_volume_{ivol}.hdf5',key='Flux')
             except:
                 print(f'Could not load volume {ivol}')
             
