@@ -442,9 +442,10 @@ def tfloor(nh,norm=17235.4775202):
 def find_progidx(catalogue_subhalo,nodeidx,snapidx_delta):
     nodeidx_depth=nodeidx
     for idepth in range(snapidx_delta):
+        print(idepth)
         matchingnode=nodeidx_depth==catalogue_subhalo['nodeIndex'].values
         if np.sum(matchingnode):
-            nodeidx_depth=catalogue_subhalo.loc[matchingnode,'mainProgenitorIndex']
+            nodeidx_depth=catalogue_subhalo.loc[matchingnode,'mainProgenitorIndex'].values[0]
         else:
             return None
     return nodeidx_depth
