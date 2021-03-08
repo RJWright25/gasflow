@@ -434,7 +434,8 @@ def ivol_idx(ivol,nvol):
 
 def tfloor(nh,norm=17235.4775202):
     T=np.zeros(np.shape(nh))+8000
-    T[np.where(nh>=10**-1)]=norm*nh**(1/3)
+    dense=np.where(nh>=10**-1)
+    T[dense]=norm*nh[dense]**(1/3)
 
     return T
 
@@ -459,6 +460,11 @@ def analyse_gasflow(path,mcut,snapidx,nvol,ivol,snapidx_delta=1):
     if os.path.exists(logfile):
         os.remove(logfile)
     logging.basicConfig(filename=logfile, level=logging.INFO)
+
+    output_fname=f'catalogues/gasflow/gasflow_snapidx_{snapidx}_n_{str(nvol).zfill(2)}_volume_{ivol}.hdf5'
+    if os.path.exists(output_fname):
+        os.remove(output_fname)
+
 
     #background data for calc
     redshift_table=pd.read_hdf('snapshot_redshifts.hdf5',key='snapshots')
@@ -613,8 +619,10 @@ def analyse_gasflow(path,mcut,snapidx,nvol,ivol,snapidx_delta=1):
     initfields=['nodeIndex','GroupNumber','SubGroupNumber']
     gasflow_df=catalogue_subhalo.loc[snap2_com_mask,initfields]
 
-    gasflow_df.loc[:,'Inflow-ISM']=np.nan
-    gasflow_df.loc[:,'Outflow-ISM']=np.nan
+    gasflow_df.loc[:,'Inflow-ISM_HMS']=np.nan
+    gasflow_df.loc[:,'Inflow-ISM_30kpc']=np.nan
+    gasflow_df.loc[:,'Outflow-ISM_HMS']=np.nan
+    gasflow_df.loc[:,'Outflow-ISM_30kpc']=np.nan
 
     r200_facs=[0.125,0.25,0.5,0.75,1]
     for fac in r200_facs:
@@ -655,7 +663,7 @@ def analyse_gasflow(path,mcut,snapidx,nvol,ivol,snapidx_delta=1):
         if icen:
             candidate_radius=hostradius
         else:
-            candidate_radius=12*hmsradius
+            candidate_radius=8*hmsradius
 
         part_idx_candidates_snap2=kdtree_snap2_periodic.query_ball_point(com_snap2,candidate_radius)
         part_idx_candidates_snap1=kdtree_snap1_periodic.query_ball_point(com_snap1,candidate_radius)
@@ -696,33 +704,65 @@ def analyse_gasflow(path,mcut,snapidx,nvol,ivol,snapidx_delta=1):
         #     del part_data_candidates_snap1[dset]
         #     del part_data_candidates_snap2[dset]
 
+        gas_snap1=part_data_candidates_snap1["ParticleTypes"].values==0
+
         #sfr criterion
-        part_data_candidates_snap1["starforming-ism"]=np.logical_and.reduce([part_data_candidates_snap1["Density"].values*nh_conversion>=0.1*(part_data_candidates_snap1["Metallicity"].values)**(-0.64),
-                                                                             part_data_candidates_snap1["Temperature"].values<=tfloor(part_data_candidates_snap1["Density"].values)*10**0.5,
-                                                                             part_data_candidates_snap1["r_com"].values<=12*hmsradius]).astype(int)
+        # part_data_candidates_snap1["starforming-ism-hms"]=np.logical_and.reduce([part_data_candidates_snap1["Density"].values*nh_conversion>=0.1*(part_data_candidates_snap1["Metallicity"].values)**(-0.64),
+        #                                                                      part_data_candidates_snap1["Temperature"].values<=tfloor(part_data_candidates_snap1["Density"].values*nh_conversion)*10**0.5,
+        #                                                                      part_data_candidates_snap1["r_com"].values<=4*hmsradius]).astype(int)
 
-        part_data_candidates_snap2["starforming-ism"]=np.logical_and.reduce([part_data_candidates_snap2["Density"].values*nh_conversion>=0.1*(part_data_candidates_snap2["Metallicity"].values)**(-0.64),
-                                                                             part_data_candidates_snap2["Temperature"].values<=tfloor(part_data_candidates_snap2["Density"].values)*10**0.5,
-                                                                             part_data_candidates_snap2["r_com"].values<=12*hmsradius]).astype(int)
+        # part_data_candidates_snap2["starforming-ism-hms"]=np.logical_and.reduce([part_data_candidates_snap2["Density"].values*nh_conversion>=0.1*(part_data_candidates_snap2["Metallicity"].values)**(-0.64),
+        #                                                                      part_data_candidates_snap2["Temperature"].values<=tfloor(part_data_candidates_snap2["Density"].values*nh_conversion)*10**0.5,
+        #                                                                      part_data_candidates_snap2["r_com"].values<=4*hmsradius]).astype(int)
+
+        # part_data_candidates_snap1["starforming-ism-30kpc"]=np.logical_and.reduce([part_data_candidates_snap1["Density"].values*nh_conversion>=0.1*(part_data_candidates_snap1["Metallicity"].values)**(-0.64),
+        #                                                                      part_data_candidates_snap1["Temperature"].values<=tfloor(part_data_candidates_snap1["Density"].values*nh_conversion)*10**0.5,
+        #                                                                      part_data_candidates_snap1["r_com"].values<=0.03]).astype(int)
+
+        # part_data_candidates_snap2["starforming-ism-30kpc"]=np.logical_and.reduce([part_data_candidates_snap2["Density"].values*nh_conversion>=0.1*(part_data_candidates_snap2["Metallicity"].values)**(-0.64),
+        #                                                                      part_data_candidates_snap2["Temperature"].values<=tfloor(part_data_candidates_snap2["Density"].values*nh_conversion)*10**0.5,
+        #                                                                      part_data_candidates_snap2["r_com"].values<=0.03]).astype(int)
+ 
+
+
         #atomic phase
-        part_data_candidates_snap1["atomic-ism"]=np.logical_and.reduce([part_data_candidates_snap1["Density"].values*nh_conversion>=0.01,
-                                                                             part_data_candidates_snap1["Temperature"].values<=tfloor(part_data_candidates_snap1["Density"].values)*10**0.5,
-                                                                             part_data_candidates_snap1["r_com"].values<=8*hmsradius]).astype(int)
+        part_data_candidates_snap1["atomic-ism-hms"]=np.logical_and.reduce([part_data_candidates_snap1["Density"].values*nh_conversion>=0.01,
+                                                                             part_data_candidates_snap1["Temperature"].values<=tfloor(part_data_candidates_snap1["Density"].values*nh_conversion)*10**0.5,
+                                                                             part_data_candidates_snap1["r_com"].values<=6*hmsradius]).astype(int)
 
-        part_data_candidates_snap2["atomic-ism"]=np.logical_and.reduce([part_data_candidates_snap2["Density"].values*nh_conversion>=0.01,
-                                                                             part_data_candidates_snap2["Temperature"].values<=tfloor(part_data_candidates_snap2["Density"].values)*10**0.5,
-                                                                             part_data_candidates_snap2["r_com"].values<=8*hmsradius]).astype(int)
+        part_data_candidates_snap2["atomic-ism-hms"]=np.logical_and.reduce([part_data_candidates_snap2["Density"].values*nh_conversion>=0.01,
+                                                                             part_data_candidates_snap2["Temperature"].values<=tfloor(part_data_candidates_snap2["Density"].values*nh_conversion)*10**0.5,
+                                                                             part_data_candidates_snap2["r_com"].values<=6*hmsradius]).astype(int)
+        
+        part_data_candidates_snap1["atomic-ism-30kpc"]=np.logical_and.reduce([part_data_candidates_snap1["Density"].values*nh_conversion>=0.01,
+                                                                             part_data_candidates_snap1["Temperature"].values<=tfloor(part_data_candidates_snap1["Density"].values*nh_conversion)*10**0.5,
+                                                                             part_data_candidates_snap1["r_com"].values<=0.03]).astype(int)
+
+        part_data_candidates_snap2["atomic-ism-30kpc"]=np.logical_and.reduce([part_data_candidates_snap2["Density"].values*nh_conversion>=0.01,
+                                                                             part_data_candidates_snap2["Temperature"].values<=tfloor(part_data_candidates_snap2["Density"].values*nh_conversion)*10**0.5,
+                                                                             part_data_candidates_snap2["r_com"].values<=0.03]).astype(int)
+
+
+    
         #ism def - star forming at all within 8 hms or atomic within 4 hms
-        ism_snap1=np.logical_or(part_data_candidates_snap1["starforming-ism"].values,part_data_candidates_snap1["atomic-ism"].values)
-        ism_snap2=np.logical_or(part_data_candidates_snap2["starforming-ism"].values,part_data_candidates_snap2["atomic-ism"].values)
+        ism_hms_snap1=np.logical_or.reduce([part_data_candidates_snap1["atomic-ism-hms"].values])
+        ism_hms_snap2=np.logical_or.reduce([part_data_candidates_snap2["atomic-ism-hms"].values])
+        
+        ism_30kpc_snap1=np.logical_or.reduce([part_data_candidates_snap1["atomic-ism-30kpc"].values])
+        ism_30kpc_snap2=np.logical_or.reduce([part_data_candidates_snap2["atomic-ism-30kpc"].values])
 
         #new ism particles
-        ism_partidx_in=np.logical_and(np.logical_not(ism_snap1),ism_snap2)
-        #removed ism particles
-        ism_partidx_out=np.logical_and(ism_snap1,np.logical_not(ism_snap2)) 
+        ism_partidx_in_hms=np.logical_and.reduce([np.logical_not(ism_hms_snap1),ism_hms_snap2,gas_snap1])
+        ism_partidx_in_30kpc=np.logical_and.reduce([np.logical_not(ism_30kpc_snap1),ism_30kpc_snap2,gas_snap1])
 
-        gasflow_df.loc[igalaxy_snap2,'Inflow-ISM']=np.sum(part_data_candidates_snap2.loc[ism_partidx_in,'Mass'])
-        gasflow_df.loc[igalaxy_snap2,'Outflow-ISM']=np.sum(part_data_candidates_snap2.loc[ism_partidx_out,'Mass'])
+        #removed ism particles
+        ism_partidx_out_hms=np.logical_and.reduce([ism_hms_snap1,np.logical_not(ism_hms_snap2),gas_snap1])
+        ism_partidx_out_30kpc=np.logical_and.reduce([ism_30kpc_snap1,np.logical_not(ism_30kpc_snap2),gas_snap1])
+
+        gasflow_df.loc[igalaxy_snap2,'Inflow-ISM_HMS']=np.sum(part_data_candidates_snap2.loc[ism_partidx_in_hms,'Mass'])
+        gasflow_df.loc[igalaxy_snap2,'Outflow-ISM_HMS']=np.sum(part_data_candidates_snap2.loc[ism_partidx_out_hms,'Mass'])
+        gasflow_df.loc[igalaxy_snap2,'Inflow-ISM_30kpc']=np.sum(part_data_candidates_snap2.loc[ism_partidx_in_30kpc,'Mass'])
+        gasflow_df.loc[igalaxy_snap2,'Outflow-ISM_30kpc']=np.sum(part_data_candidates_snap2.loc[ism_partidx_out_30kpc,'Mass'])
 
         #halo def (if central)
         if icen:
@@ -749,9 +789,6 @@ def analyse_gasflow(path,mcut,snapidx,nvol,ivol,snapidx_delta=1):
 
     logging.info(f'{np.sum(success):.0f} of {len(success):.0f} galaxies were successfully processed ({np.nanmean(success)*100:.1f}%) [runtime = {time.time()-t0:.2f}s]')
 
-    output_fname=f'catalogues/gasflow/gasflow_snapidx_{snapidx}_n_{str(nvol).zfill(2)}_volume_{ivol}.hdf5'
-    if os.path.exists(output_fname):
-        os.remove(output_fname)
 
     gasflow_df.to_hdf(output_fname,key='Flux')
     print(gasflow_df)
