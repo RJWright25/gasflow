@@ -632,7 +632,7 @@ def analyse_gasflow(path,mcut,snapidx,nvol,ivol,snapidx_delta=1):
     #Main halo loop
     for iigalaxy,(igalaxy_snap2,galaxy_snap2) in enumerate(catalogue_subhalo.loc[snap2_com_mask,:].iterrows()):
         
-        nodeidx=galaxy_snap2['nodeIndex']
+        nodeidx=galaxy_snap2['nodeIndex'].values
         subgroupnumber=galaxy_snap2['SubGroupNumber']
         progidx=find_progidx(catalogue_subhalo,nodeidx=nodeidx,snapidx_delta=snapidx_delta)
 
