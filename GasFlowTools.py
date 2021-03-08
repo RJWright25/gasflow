@@ -442,7 +442,7 @@ def tfloor(nh,norm=17235.4775202):
 def find_progidx(catalogue_subhalo,nodeidx,snapidx_delta):
     nodeidx_depth=nodeidx
     for idepth in range(snapidx_delta):
-        matchingnode=nodeidx_depth==catalogue_subhalo['nodeIndex']
+        matchingnode=nodeidx_depth==catalogue_subhalo['nodeIndex'].values
         if np.sum(matchingnode):
             nodeidx_depth=catalogue_subhalo.loc[matchingnode,'mainProgenitorIndex']
         else:
@@ -632,7 +632,7 @@ def analyse_gasflow(path,mcut,snapidx,nvol,ivol,snapidx_delta=1):
     #Main halo loop
     for iigalaxy,(igalaxy_snap2,galaxy_snap2) in enumerate(catalogue_subhalo.loc[snap2_com_mask,:].iterrows()):
         
-        nodeidx=galaxy_snap2['nodeIndex'].values
+        nodeidx=galaxy_snap2['nodeIndex']
         subgroupnumber=galaxy_snap2['SubGroupNumber']
         progidx=find_progidx(catalogue_subhalo,nodeidx=nodeidx,snapidx_delta=snapidx_delta)
 
