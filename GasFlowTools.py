@@ -446,7 +446,8 @@ def find_progidx(catalogue_subhalo,nodeidx,snapidx_delta):
         if np.sum(matchingnode):
             nodeidx_depth=catalogue_subhalo.loc[matchingnode,'mainProgenitorIndex'].values[0]
         else:
-            return None
+            nodeidx_depth=None
+            break
         print(f'match: {nodeidx_depth}')
     return nodeidx_depth
 
