@@ -452,8 +452,10 @@ def find_progidx(catalogue_subhalo,nodeidx,snapidx_delta):
         
         nodeidx_depths.append(nodeidx_depth)
     
-    print(nodeidx_depths)
-    return nodeidx_depth
+    if len(nodeidx_depths)==snapidx_delta+1:
+        return nodeidx_depths[-1]
+    else:
+        return None
 
 def analyse_gasflow(path,mcut,snapidx,nvol,ivol,snapidx_delta=1):
 
@@ -641,6 +643,7 @@ def analyse_gasflow(path,mcut,snapidx,nvol,ivol,snapidx_delta=1):
         nodeidx=galaxy_snap2['nodeIndex']
         subgroupnumber=galaxy_snap2['SubGroupNumber']
         progidx=find_progidx(catalogue_subhalo,nodeidx=nodeidx,snapidx_delta=snapidx_delta)
+        print(progidx)
 
         if subgroupnumber==0:
             icen=True
