@@ -461,10 +461,9 @@ def analyse_gasflow(path,mcut,snapidx,nvol,ivol,snapidx_delta=1):
         os.remove(logfile)
     logging.basicConfig(filename=logfile, level=logging.INFO)
 
-    output_fname=f'catalogues/gasflow/gasflow_snapidx_{snapidx}_n_{str(nvol).zfill(2)}_volume_{ivol}.hdf5'
+    output_fname=f'catalogues/gasflow/gasflow_snapidx_{snapidx}_delta_{str(snapidx_delta).zfill(3)}_n_{str(nvol).zfill(2)}_volume_{ivol}.hdf5'
     if os.path.exists(output_fname):
         os.remove(output_fname)
-
 
     #background data for calc
     redshift_table=pd.read_hdf('snapshot_redshifts.hdf5',key='snapshots')
@@ -793,7 +792,7 @@ def analyse_gasflow(path,mcut,snapidx,nvol,ivol,snapidx_delta=1):
     gasflow_df.to_hdf(output_fname,key='Flux')
     print(gasflow_df)
 
-def combine_catalogues(nvol,mcut,snapidxs=[]):
+def combine_catalogues(nvol,mcut,snapidxs=[],snapidx_delta=1):
     outname='catalogues/catalogue_gasflow.hdf5'
     catalogue_subhalo=pd.read_hdf('catalogues/catalogue_subhalo.hdf5',key='Subhalo')
     catalogue_subhalo=catalogue_subhalo.loc[np.logical_and(np.logical_or.reduce([catalogue_subhalo['snapshotidx']==snapidx for snapidx in snapidxs]),catalogue_subhalo['ApertureMeasurements/Mass/030kpc_4']>=10**mcut/10**10),:]
@@ -805,7 +804,7 @@ def combine_catalogues(nvol,mcut,snapidxs=[]):
         for ivol in range(nvol**3):
             print(f'Loading file {isub_snap+1}/{nvol**3} for snap {snapidx}')
             try:
-                accfile_data_file=pd.read_hdf(f'catalogues/gasflow/gasflow_snapidx_{str(snapidx).zfill(3)}_n_{str(nvol).zfill(2)}_volume_{str(ivol).zfill(3)}.hdf5',key='Flux')
+                accfile_data_file=pd.read_hdf(f'catalogues/gasflow/gasflow_snapidx_{str(snapidx).zfill(3)}_delta_{str(snapidx_delta).zfill(3)}_n_{str(nvol).zfill(2)}_volume_{str(ivol).zfill(3)}.hdf5',key='Flux')
             except:
                 print(f'Could not load volume {ivol}')
             
