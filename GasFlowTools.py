@@ -451,7 +451,8 @@ def find_progidx(catalogue_subhalo,nodeidx,snapidx_delta):
             break
         
         nodeidx_depths.append(nodeidx_depth)
-        print(nodeidx_depths)
+    
+    print(nodeidx_depths)
     return nodeidx_depth
 
 def analyse_gasflow(path,mcut,snapidx,nvol,ivol,snapidx_delta=1):
