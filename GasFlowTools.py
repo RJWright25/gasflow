@@ -438,6 +438,16 @@ def tfloor(nh,norm=17235.4775202):
 
     return T
 
+def find_progidx(catalogue_subhalo,nodeidx,snapidx_delta):
+    nodeidx_depth=nodeidx
+    for idepth in range(snapidx_delta):
+        matchingnode=nodeidx_depth==catalogue_subhalo['nodeIndex']
+        if np.sum(matchingnode):
+            nodeidx_depth=catalogue_subhalo.loc[matchingnode,'mainProgenitorIndex']
+        else:
+            return None
+    return nodeidx_depth
+
 def analyse_gasflow(path,mcut,snapidx,nvol,ivol,snapidx_delta=1):
 
     ivol=int(ivol)
@@ -445,7 +455,7 @@ def analyse_gasflow(path,mcut,snapidx,nvol,ivol,snapidx_delta=1):
     ix,iy,iz=ivol_idx(ivol,nvol=nvol)
 
     t0=time.time()
-    logfile=f'logs/gasflow/gasflow_snapidx_{snapidx}_n_{str(nvol).zfill(2)}_volume_{ivol}.log'
+    logfile=f'logs/gasflow/gasflow_snapidx_{snapidx}_delta_{str(snapidx_delta).zfill(3)}_n_{str(nvol).zfill(2)}_volume_{ivol}.log'
     if os.path.exists(logfile):
         os.remove(logfile)
     logging.basicConfig(filename=logfile, level=logging.INFO)
@@ -588,7 +598,7 @@ def analyse_gasflow(path,mcut,snapidx,nvol,ivol,snapidx_delta=1):
     
     #load catalogues into dataframes
     catalogue_subhalo=pd.read_hdf('catalogues/catalogue_subhalo.hdf5',key='Subhalo')
-    catalogue_subhalo=catalogue_subhalo.loc[np.logical_or(catalogue_subhalo['snapshotidx']==snapidx2,catalogue_subhalo['snapshotidx']==snapidx1),:]
+    catalogue_subhalo=catalogue_subhalo.loc[np.logical_and(catalogue_subhalo['snapshotidx']<=snapidx2,catalogue_subhalo['snapshotidx']>=snapidx1),:]
 
     #select relevant subhaloes
     snap2_mask=catalogue_subhalo[f'snapshotidx']==snapidx2
@@ -614,9 +624,11 @@ def analyse_gasflow(path,mcut,snapidx,nvol,ivol,snapidx_delta=1):
     success=[]
     #Main halo loop
     for iigalaxy,(igalaxy_snap2,galaxy_snap2) in enumerate(catalogue_subhalo.loc[snap2_com_mask,:].iterrows()):
-        progidx=galaxy_snap2['mainProgenitorIndex']
+        
         nodeidx=galaxy_snap2['nodeIndex']
         subgroupnumber=galaxy_snap2['SubGroupNumber']
+        progidx=find_progidx(catalogue_subhalo,nodeidx=nodeidx,snapidx_delta=snapidx_delta)
+
         if subgroupnumber==0:
             icen=True
         else:
@@ -626,6 +638,7 @@ def analyse_gasflow(path,mcut,snapidx,nvol,ivol,snapidx_delta=1):
         if np.sum(progidx==catalogue_subhalo['nodeIndex']):
             pass           
         else:
+            logging.info(f'Skipping galaxy {iigalaxy+1} of {numgal_subvolume} - could not find progenitor')
             success.append(0)
             continue
 
