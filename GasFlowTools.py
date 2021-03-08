@@ -441,14 +441,17 @@ def tfloor(nh,norm=17235.4775202):
 
 def find_progidx(catalogue_subhalo,nodeidx,snapidx_delta):
     nodeidx_depth=nodeidx
+    nodeidx_depths=[nodeidx]
     for idepth in range(snapidx_delta):
         matchingnode=nodeidx_depth==catalogue_subhalo['nodeIndex'].values
-        if np.sum(matchingnode):
+        if np.sum(matchingnode)==1:
             nodeidx_depth=catalogue_subhalo.loc[matchingnode,'mainProgenitorIndex'].values[0]
         else:
             nodeidx_depth=None
             break
-        print(f'match: {nodeidx_depth}')
+        
+        nodeidx_depths.append(nodeidx_depth)
+        print(nodeidx_depths)
     return nodeidx_depth
 
 def analyse_gasflow(path,mcut,snapidx,nvol,ivol,snapidx_delta=1):
