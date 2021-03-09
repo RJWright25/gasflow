@@ -817,16 +817,16 @@ def combine_catalogues(nvol,mcut,snapidxs=[],snapidx_deltas=[1]):
     accfile_data_vols=[]
 
     ifile=0
+    isnap=0
     for snapidx in snapidxs:
-        ifile_snap=0
+        ivol=0
         for ivol in range(nvol**3):
-            ifile_ivol=0
-
+            idelta=0
             for delta in snapidx_deltas:
                 accretion_fields_idelta=[accretion_field+f'-delta_{str(delta).zfill(2)}' for accretion_field in accretion_fields]
                 fields_idelta=np.concatenate([["nodeIndex"],accretion_fields_idelta])
                 fields_orig=np.concatenate([["nodeIndex"],accretion_fields])
-                print(f'Loading file {ifile_snap+1}/{nvol**3} for snap {snapidx} delta {delta}')
+                print(f'Loading volume {ivol+1}/{nvol**3} for snap {snapidx} (delta {delta})')
                 try:
                     accfile_data_file=pd.read_hdf(f'catalogues/gasflow/gasflow_snapidx_{snapidx}_delta_{str(delta).zfill(3)}_n_{str(nvol).zfill(2)}_volume_{str(ivol).zfill(3)}.hdf5',key='Flux')
                     print(accfile_data_file.shape[0],' subhaloes in subvolume')
@@ -836,15 +836,15 @@ def combine_catalogues(nvol,mcut,snapidxs=[],snapidx_deltas=[1]):
                 
                 accfile_data_new=pd.DataFrame(accfile_data_file.loc[:,fields_orig].values,columns=fields_idelta)
 
-                if ifile_ivol==0:
+                if idelta==0:
                     accfile_data_isnap_ivol=accfile_data_new
                 else:
                     accfile_data_isnap_ivol.loc[:,accretion_fields_idelta]=accfile_data_new.loc[:,accretion_fields_idelta].values
 
-                ifile+=1
-                ifile_ivol+=1
-
+                idelta+=1
             accfile_data_vols.append(accfile_data_isnap_ivol)
+            ivol+=1
+        isnap+=1
 
     accfile_data=pd.concat(accfile_data_isnap_ivol,ignore_index=True)
     print(accfile_data)
