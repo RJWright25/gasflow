@@ -831,7 +831,7 @@ def combine_catalogues(nvol,mcut,snapidxs=[],snapidx_deltas=[1]):
                 nsub_new=accfile_data_new.shape[0]
 
 
-                for orig_field,new_field in zip(accretion_fields,accretion_fields_idelta)
+                for orig_field,new_field in zip(accretion_fields,accretion_fields_idelta):
                     accfile_data_new.loc[:,new_field]=accfile_data_file[orig_field]
 
                 if ifile==0:
