@@ -838,8 +838,6 @@ def combine_catalogues(nvol,mcut,snapidxs=[],snapidx_deltas=[1]):
                     accfile_data_snap=accfile_data_snap.append(accfile_data_new,ignore_index=True)
                 
 
-                print(accfile_data_new)
-                print(accfile_data_snap)
 
                 ifile+=1
                 ifile_snap+=1
@@ -847,6 +845,7 @@ def combine_catalogues(nvol,mcut,snapidxs=[],snapidx_deltas=[1]):
         accfile_data_snaps.append(accfile_data_snap)
 
     accfile_data=pd.concat(accfile_data_snaps,ignore_index=True)
+    print(accfile_data)
     
     ngal=accfile_data.shape[0]
     iigal=0
