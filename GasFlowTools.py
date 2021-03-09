@@ -820,12 +820,11 @@ def combine_catalogues(nvol,mcut,snapidxs=[],snapidx_deltas=[1]):
         for delta in snapidx_deltas:
             isub_snap=0
             accretion_fields_idelta=[accretion_field+f'-delta_{str(delta).zfill(2)}' for accretion_field in accretion_fields]
-            keep_fields=np.concatenate([['nodeIndex','snapshotidx'],accretion_fields_idelta])
+            keep_fields=np.concatenate([['nodeIndex'],accretion_fields_idelta])
             for ivol in range(nvol**3):
                 print(f'Loading file {isub_snap+1}/{nvol**3} for snap {snapidx} delta {delta}')
                 try:
                     accfile_data_file=pd.read_hdf(f'catalogues/gasflow/gasflow_snapidx_{snapidx}_delta_{str(delta).zfill(3)}_n_{str(nvol).zfill(2)}_volume_{str(ivol).zfill(3)}.hdf5',key='Flux')
-                    print(list(accfile_data_file))
                 except:
                     print(f'Could not load volume {ivol}')
                     continue
