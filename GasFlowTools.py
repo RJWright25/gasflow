@@ -839,6 +839,8 @@ def combine_catalogues(nvol,mcut,snapidxs=[],snapidx_deltas=[1]):
                 else:
                     accfile_data_snap=accfile_data_snap.append(accfile_data_new,ignore_index=True)
                 
+
+                print(accfile_data_new)
                 print(accfile_data_snap)
 
                 ifile+=1
