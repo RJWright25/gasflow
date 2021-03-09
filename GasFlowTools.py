@@ -829,13 +829,15 @@ def combine_catalogues(nvol,mcut,snapidxs=[],snapidx_deltas=[1]):
                     continue
 
                 accfile_data_file.loc[:,accretion_fields_idelta]=accfile_data_file.loc[:,accretion_fields].values
-                print(accfile_data_file)
                 if isub==0:
                     accfile_data=accfile_data_file.loc[:,keep_fields]
+                    print(accfile_data)
                 elif isub_snap==0:
-                    accfile_data=accfile_data.append(accfile_data_file.loc[:,keep_fields])
+                    accfile_data=accfile_data.append(accfile_data_file.loc[:,keep_fields],ignore_index=True)
+                    print(accfile_data)
                 else:
                     accfile_data.loc[:,accretion_fields_idelta]=accfile_data_file.loc[:,accretion_fields_idelta]
+                    print(accfile_data)
 
                 isub+=1
                 isub_snap+=1
