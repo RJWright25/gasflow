@@ -813,13 +813,15 @@ def combine_catalogues(nvol,mcut,snapidxs=[],snapidx_deltas=[1]):
                       'Outflow-0.250R200', 'Inflow-0.500R200', 'Outflow-0.500R200',
                       'Inflow-0.750R200', 'Outflow-0.750R200', 'Inflow-1.000R200',
                       'Outflow-1.000R200']
-    
+    accfile_data_snaps=[]
     ifile=0
     for snapidx in snapidxs:
+
         ifile_snap=0
         for delta in snapidx_deltas:
             accretion_fields_idelta=[accretion_field+f'-delta_{str(delta).zfill(2)}' for accretion_field in accretion_fields]
             for ivol in range(nvol**3):
+                
                 print(f'Loading file {ifile_snap+1}/{nvol**3} for snap {snapidx} delta {delta}')
                 try:
                     accfile_data_file=pd.read_hdf(f'catalogues/gasflow/gasflow_snapidx_{snapidx}_delta_{str(delta).zfill(3)}_n_{str(nvol).zfill(2)}_volume_{str(ivol).zfill(3)}.hdf5',key='Flux')
@@ -828,30 +830,24 @@ def combine_catalogues(nvol,mcut,snapidxs=[],snapidx_deltas=[1]):
                     continue
                 
                 accfile_data_new=pd.DataFrame(accfile_data_file['nodeIndex'].values,columns=['nodeIndex'])
-                nsub_new=accfile_data_new.shape[0]
 
-
-                for orig_field,new_field in zip(accretion_fields,accretion_fields_idelta):
+                for orig_field,new_field in zip(accretion_fields,accretion_fields_idelta)
                     accfile_data_new.loc[:,new_field]=accfile_data_file[orig_field]
 
-                if ifile==0:
-                    isnap_mask=(np.zeros(nsub_new)+1).astype(bool)
-                elif ifile_snap==0:
-                    isnap_mask=np.concatenate([((isnap_mask).astype(float)-1).astype(int),(np.zeros(nsub_new)+1).astype(bool)])
-
-                if ifile==0:
-                    accfile_data=accfile_data_new.loc[:,:]
-                elif ifile_snap==0:
-                    accfile_data=accfile_data.append(accfile_data_new.loc[:,:])
+                if ifile_snap==0:
+                    accfile_data_snap=accfile_data_new
                 else:
-                    accfile_data.loc[isnap_mask,accretion_fields_idelta]=accfile_data_new.loc[:,accretion_fields_idelta]
-
-                print(accfile_data)
+                    accfile_data_snap=accfile_data_snap.append(accfile_data_new,ignore_index=True)
+                
+                print(accfile_data_snap)
 
                 ifile+=1
                 ifile_snap+=1
 
-    print(accfile_data)
+        accfile_data_snaps.append(accfile_data_snap)
+
+    accfile_data=pd.concat(accfile_data_snaps,ignore_index=True)
+    
     ngal=accfile_data.shape[0]
     iigal=0
     for igal, gal in accfile_data.iterrows():
