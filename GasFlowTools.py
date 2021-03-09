@@ -844,8 +844,6 @@ def combine_catalogues(nvol,mcut,snapidxs=[],snapidx_deltas=[1]):
                 ifile+=1
                 ifile_ivol+=1
 
-            print(list(accfile_data_isnap_ivol))
-            print(accfile_data_isnap_ivol)
             accfile_data_vols.append(accfile_data_isnap_ivol)
 
     accfile_data=pd.concat(accfile_data_isnap_ivol,ignore_index=True)
