@@ -830,7 +830,7 @@ def combine_catalogues(nvol,mcut,snapidxs=[],snapidx_deltas=[1]):
                     print(f'Could not load volume {ivol}')
                     continue
                 
-                accfile_data_new=pd.DataFrame(accfile_data_file[:,fields_orig].values,columns=fields_idelta)
+                accfile_data_new=pd.DataFrame(accfile_data_file.loc[:,fields_orig].values,columns=fields_idelta)
 
                 if ifile_snap==0:
                     accfile_data_snap=accfile_data_new
