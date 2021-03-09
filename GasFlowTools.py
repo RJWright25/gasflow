@@ -841,6 +841,7 @@ def combine_catalogues(nvol,mcut,snapidxs=[],snapidx_deltas=[1]):
                 isub+=1
                 isub_snap+=1
 
+    print(accfile_data)
     ngal=accfile_data.shape[0]
     iigal=0
     for igal, gal in accfile_data.iterrows():
