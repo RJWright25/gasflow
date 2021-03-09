@@ -815,7 +815,6 @@ def combine_catalogues(nvol,mcut,snapidxs=[],snapidx_deltas=[1]):
                       'Outflow-1.000R200']
     
     isub=0
-    accfile_data=pd.DataFrame()
     for snapidx in snapidxs:
         for delta in snapidx_deltas:
             isub_snap=0
