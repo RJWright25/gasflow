@@ -832,7 +832,7 @@ def combine_catalogues(nvol,mcut,snapidxs=[],snapidx_deltas=[1]):
                 accfile_data_new=pd.DataFrame(accfile_data_file['nodeIndex'].values,columns=['nodeIndex'])
 
                 for orig_field,new_field in zip(accretion_fields,accretion_fields_idelta):
-                    accfile_data_new.loc[:,new_field]=accfile_data_file[orig_field]
+                    accfile_data_new[new_field]=accfile_data_file[orig_field]
 
                 if ifile_snap==0:
                     accfile_data_snap=accfile_data_new
