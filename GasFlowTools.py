@@ -814,12 +814,11 @@ def combine_catalogues(nvol,mcut,snapidxs=[],snapidx_deltas=[1]):
                       'Inflow-0.750R200', 'Outflow-0.750R200', 'Inflow-1.000R200',
                       'Outflow-1.000R200']
     
-    isub=0
+    ifile=0
     for snapidx in snapidxs:
+        ifile_snap=0
         for delta in snapidx_deltas:
-            isub_snap=0
             accretion_fields_idelta=[accretion_field+f'-delta_{str(delta).zfill(2)}' for accretion_field in accretion_fields]
-            keep_fields=np.concatenate([['nodeIndex'],accretion_fields_idelta])
             for ivol in range(nvol**3):
                 print(f'Loading file {isub_snap+1}/{nvol**3} for snap {snapidx} delta {delta}')
                 try:
@@ -827,20 +826,30 @@ def combine_catalogues(nvol,mcut,snapidxs=[],snapidx_deltas=[1]):
                 except:
                     print(f'Could not load volume {ivol}')
                     continue
+                
+                accfile_data_new=pd.DataFrame(accfile_data_file['nodeIndex'].values,columns=['nodeIndex'])
+                nsub_new=accfile_data_new.shape[0]
 
-                accfile_data_file.loc[:,accretion_fields_idelta]=accfile_data_file.loc[:,accretion_fields].values
-                if isub==0:
-                    accfile_data=accfile_data_file.loc[:,keep_fields]
-                    print(accfile_data)
-                elif isub_snap==0:
-                    accfile_data=accfile_data.append(accfile_data_file.loc[:,keep_fields],ignore_index=True)
-                    print(accfile_data)
+
+                for orig_field,new_field in zip(accretion_fields,accretion_fields_idelta)
+                    accfile_data_new.loc[:,new_field]=accfile_data_file[orig_field]
+
+                if ifile==0:
+                    isnap_mask=(np.zeros(nsub_new)+1).astype(bool)
+                elif ifile_snap==0:
+                    isnap_mask=np.concatenate([((isnap_mask).astype(float)-1).astype(int),(np.zeros(nsub_new)+1).astype(bool)])
+
+                if ifile==0:
+                    accfile_data=accfile_data_new.loc[:,:]
+                elif ifile_snap==0:
+                    accfile_data=accfile_data.append(accfile_data_new.loc[:,:])
                 else:
-                    accfile_data.loc[:,accretion_fields_idelta]=accfile_data_file.loc[:,accretion_fields_idelta]
-                    print(accfile_data)
+                    accfile_data.loc[isnap_mask,accretion_fields_idelta]=accfile_data_new.loc[:,accretion_fields_idelta]
 
-                isub+=1
-                isub_snap+=1
+                print(accfile_data)
+
+                ifile+=1
+                ifile_snap+=1
 
     print(accfile_data)
     ngal=accfile_data.shape[0]
