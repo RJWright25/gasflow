@@ -801,29 +801,45 @@ def analyse_gasflow(path,mcut,snapidx,nvol,ivol,snapidx_delta=1):
     gasflow_df.to_hdf(output_fname,key='Flux')
     print(gasflow_df)
 
-def combine_catalogues(nvol,mcut,snapidxs=[],snapidx_delta=1):
-    outname=f'catalogues/catalogue_gasflow_nvol_{str(nvol).zfill(2)}_mcut_{str(mcut).zfill(2)}_delta_{str(snapidx_delta).zfill(3)}.hdf5'
+def combine_catalogues(nvol,mcut,snapidxs=[],snapidx_deltas=[1]):
+    outname=f'catalogues/catalogue_gasflow_nvol_{str(nvol).zfill(2)}_mcut_{str(mcut).zfill(2)}.hdf5'
     catalogue_subhalo=pd.read_hdf('catalogues/catalogue_subhalo.hdf5',key='Subhalo')
     catalogue_subhalo=catalogue_subhalo.loc[np.logical_and(np.logical_or.reduce([catalogue_subhalo['snapshotidx']==snapidx for snapidx in snapidxs]),catalogue_subhalo['ApertureMeasurements/Mass/030kpc_4']>=10**mcut/10**10),:]
     catalogue_subhalo.reset_index()
+
+    accretion_fields=['Inflow-ISM_HMS',
+                      'Inflow-ISM_30kpc', 'Outflow-ISM_HMS', 'Outflow-ISM_30kpc',
+                      'Inflow-0.125R200', 'Outflow-0.125R200', 'Inflow-0.250R200',
+                      'Outflow-0.250R200', 'Inflow-0.500R200', 'Outflow-0.500R200',
+                      'Inflow-0.750R200', 'Outflow-0.750R200', 'Inflow-1.000R200',
+                      'Outflow-1.000R200']
     
     isub=0
+    accfile_data=pd.DataFrame()
     for snapidx in snapidxs:
-        isub_snap=0
-        for ivol in range(nvol**3):
-            print(f'Loading file {isub_snap+1}/{nvol**3} for snap {snapidx}')
-            try:
-                accfile_data_file=pd.read_hdf(f'catalogues/gasflow/gasflow_snapidx_{snapidx}_delta_{str(snapidx_delta).zfill(3)}_n_{str(nvol).zfill(2)}_volume_{str(ivol).zfill(3)}.hdf5',key='Flux')
-            except:
-                print(f'Could not load volume {ivol}')
-            
-            if isub==0:
-                accfile_data=accfile_data_file
-            else:
-                accfile_data=accfile_data.append(accfile_data_file,ignore_index=True)
+        for delta in snapidx_deltas:
+            isub_snap=0
+            accretion_fields_idelta=[accretion_field+f'-delta_{str(delta).zfill(2)}' for accretion_field in accretion_fields]
+            keep_fields=np.concatenate([['nodeIndex','snapshotidx'],accretion_fields_idelta])
+            for ivol in range(nvol**3):
+                print(f'Loading file {isub_snap+1}/{nvol**3} for snap {snapidx} delta {delta}')
+                try:
+                    accfile_data_file=pd.read_hdf(f'catalogues/gasflow/gasflow_snapidx_{snapidx}_delta_{str(delta).zfill(3)}_n_{str(nvol).zfill(2)}_volume_{str(ivol).zfill(3)}.hdf5',key='Flux')
+                except:
+                    print(f'Could not load volume {ivol}')
+                    continue
 
-            isub+=1
-            isub_snap+=1
+                accfile_data_file.loc[:,accretion_fields_idelta]=accfile_data_file.loc[:,accretion_fields].values
+            
+                if isub==0:
+                    accfile_data=accfile_data_file.loc[:,keep_fields]
+                elif isub_snap==0:
+                    accfile_data=accfile_data.append(accfile_data_file.loc[:,keep_fields])
+                else:
+                    accfile_data.loc[:,accretion_fields_idelta]=accfile_data_file[:,accretion_fields_idelta]
+
+                isub+=1
+                isub_snap+=1
 
     ngal=accfile_data.shape[0]
     iigal=0
