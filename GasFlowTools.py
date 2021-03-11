@@ -11,6 +11,8 @@ from read_eagle import EagleSnapshot
 from scipy.spatial import cKDTree
 from astropy.cosmology import FlatLambdaCDM
 
+#high level
+
 def submit_function(function,arguments,memory,time):
     filename=sys.argv[0]
     cwd=os.getcwd()
@@ -312,6 +314,9 @@ def extract_subhalo(path,mcut,snapidxmin=0,overwrite=True):
     except:
         data.to_hdf(f'catalogues/catalogue_subhalo-BACKUP.hdf5',key='Subhalo')
 
+def postprocess_subhalo(path,mcut,snapidx,nvol,ivol,snapidx_delta=1):
+    pass
+
 def match_tree(mcut,snapidxs=[]):
 
     outname='catalogues/catalogue_subhalo.hdf5'
@@ -418,44 +423,6 @@ def match_fof(mcut,snapidxs=[]):
 
     os.remove(outname)
     catalogue_subhalo.to_hdf(outname,key='Subhalo')
-
-def ivol_gen(ix,iy,iz,nvol):
-    ivol=ix*nvol**2+iy*nvol+iz
-    ivol_str=str(ivol).zfill(3)
-    return ivol_str
-
-def ivol_idx(ivol,nvol):
-    if type(ivol)==str:
-        ivol=int(ivol)
-    ix=int(np.floor(ivol/nvol**2))
-    iz=int(ivol%nvol)
-    iy=int((ivol-ix*nvol**2-iz)/nvol)
-    return (ix,iy,iz)
-
-def tfloor(nh,norm=17235.4775202):
-    T=np.zeros(np.shape(nh))+8000
-    dense=np.where(nh>=10**-1)
-    T[dense]=norm*nh[dense]**(1/3)
-
-    return T
-
-def find_progidx(catalogue_subhalo,nodeidx,snapidx_delta):
-    nodeidx_depth=nodeidx
-    nodeidx_depths=[nodeidx]
-    for idepth in range(snapidx_delta):
-        matchingnode=nodeidx_depth==catalogue_subhalo['nodeIndex'].values
-        if np.sum(matchingnode)==1:
-            nodeidx_depth=catalogue_subhalo.loc[matchingnode,'mainProgenitorIndex'].values[0]
-        else:
-            nodeidx_depth=None
-            break
-        
-        nodeidx_depths.append(nodeidx_depth)
-    
-    if len(nodeidx_depths)==snapidx_delta+1:
-        return nodeidx_depths[-1]
-    else:
-        return None
 
 def analyse_gasflow(path,mcut,snapidx,nvol,ivol,snapidx_delta=1):
 
@@ -801,7 +768,7 @@ def analyse_gasflow(path,mcut,snapidx,nvol,ivol,snapidx_delta=1):
     gasflow_df.to_hdf(output_fname,key='Flux')
     print(gasflow_df)
 
-def combine_catalogues(nvol,mcut,snapidxs=[],snapidx_deltas=[1]):
+def combine_catalogues(mcut,snapidxs=[],nvol,snapidx_deltas=[1]):
     outname=f'catalogues/catalogue_gasflow_nvol_{str(nvol).zfill(2)}_mcut_{str(mcut).zfill(2)}.hdf5'
     catalogue_subhalo=pd.read_hdf('catalogues/catalogue_subhalo.hdf5',key='Subhalo')
     catalogue_subhalo=catalogue_subhalo.loc[np.logical_and(np.logical_or.reduce([catalogue_subhalo['snapshotidx']==snapidx for snapidx in snapidxs]),catalogue_subhalo['ApertureMeasurements/Mass/030kpc_4']>=10**mcut/10**10),:]
@@ -865,3 +832,74 @@ def combine_catalogues(nvol,mcut,snapidxs=[],snapidx_deltas=[1]):
         os.remove(outname)
     
     catalogue_subhalo.to_hdf(outname,key='Subhalo')
+
+
+
+
+#lower level
+
+def ivol_gen(ix,iy,iz,nvol):
+    ivol=ix*nvol**2+iy*nvol+iz
+    ivol_str=str(ivol).zfill(3)
+    return ivol_str
+
+def ivol_idx(ivol,nvol):
+    if type(ivol)==str:
+        ivol=int(ivol)
+    ix=int(np.floor(ivol/nvol**2))
+    iz=int(ivol%nvol)
+    iy=int((ivol-ix*nvol**2-iz)/nvol)
+    return (ix,iy,iz)
+
+def tfloor(nh,norm=17235.4775202):
+    T=np.zeros(np.shape(nh))+8000
+    dense=np.where(nh>=10**-1)
+    T[dense]=norm*nh[dense]**(1/3)
+
+    return T
+
+def find_progidx(catalogue_subhalo,nodeidx,snapidx_delta):
+    nodeidx_depth=nodeidx
+    nodeidx_depths=[nodeidx]
+    for idepth in range(snapidx_delta):
+        matchingnode=nodeidx_depth==catalogue_subhalo['nodeIndex'].values
+        if np.sum(matchingnode)==1:
+            nodeidx_depth=catalogue_subhalo.loc[matchingnode,'mainProgenitorIndex'].values[0]
+        else:
+            nodeidx_depth=None
+            break
+        
+        nodeidx_depths.append(nodeidx_depth)
+    
+    if len(nodeidx_depths)==snapidx_delta+1:
+        return nodeidx_depths[-1]
+    else:
+        return None
+
+def BaryMP(x,y,eps=0.01,grad=1):
+	"""
+	Find the radius for a galaxy from the BaryMP method
+	x = r/r_200
+	y = cumulative baryonic mass profile
+	eps = epsilon, if data 
+	"""
+	dydx = np.diff(y)/np.diff(x)
+	
+	maxarg = np.argwhere(dydx==np.max(dydx))[0][0] # Find where the gradient peaks
+	xind = np.argwhere(dydx[maxarg:]<=grad)[0][0] + maxarg # The index where the gradient reaches 1
+	
+	x2fit_new, y2fit_new = x[xind:], y[xind:] # Should read as, e.g., "x to fit".
+	x2fit, y2fit = np.array([]), np.array([]) # Gets the while-loop going
+	
+	while len(y2fit)!=len(y2fit_new):
+		x2fit, y2fit = np.array(x2fit_new), np.array(y2fit_new)
+		p = np.polyfit(x2fit, y2fit, 1)
+		yfit = p[0]*x2fit + p[1]
+		chi = abs(yfit-y2fit) # Separation in the y-direction for the fit from the data
+		chif = (chi<eps) # Filter for what chi-values are acceptable
+		x2fit_new, y2fit_new = x2fit[chif], y2fit[chif]
+	
+	r_bmp = x2fit[0] # Radius from the baryonic-mass-profile technique, returned as a fraction of the virial radius!
+	Nfit = len(x2fit) # Number of points on the profile fitted to in the end
+
+	return r_bmp, Nfit
