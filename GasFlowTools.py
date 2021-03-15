@@ -453,6 +453,9 @@ def analyse_subhalo(path,mcut,snapidx,nvol,ivol):
     cosmology=FlatLambdaCDM(H0=h5py.File(snapidx_particledatapath,'r')['Header'].attrs['HubbleParam']*100,
                             Om0=h5py.File(snapidx_particledatapath,'r')['Header'].attrs['Omega0'])
 
+    rhocrit=cosmology.critical_density(redshift)
+    rhocrit=rhocrit.to(units.Msun/units.Mpc**3)
+    rhocrit=rhocrit.value
     xmin=ix*subvol_edgelength;xmax=(ix+1)*subvol_edgelength
     ymin=iy*subvol_edgelength;ymax=(iy+1)*subvol_edgelength
     zmin=iz*subvol_edgelength;zmax=(iz+1)*subvol_edgelength
@@ -557,15 +560,12 @@ def analyse_subhalo(path,mcut,snapidx,nvol,ivol):
             icen=False
 
         com=[galaxy[f"CentreOfPotential_{x}"] for x in 'xyz']
-        vcom=[galaxy[f"Velocity_{x}"] for x in 'xyz']
 
         #select particles in halo-size sphere
-        # r200_host=galaxy['Group_R_Crit200']
-
-        rhocrit=cosmology.critical_density(redshift)
-        rhocrit=rhocrit.to(units.Msun/units.Mpc**3)
-        rhocrit=rhocrit.value
-        r200_eff=r200(m200=galaxy['Mass']*10**10,rhocrit=rhocrit)
+        if icen:
+            r200_eff=galaxy['Group_R_Crit200']
+        else:
+            r200_eff=r200(m200=galaxy['Mass']*10**10,rhocrit=rhocrit)
         
         part_idx_within_radius=kdtree_snap1_periodic.query_ball_point(com,r200_eff)
         part_IDs_within_radius=(particledata_snap.loc[part_idx_within_radius,"ParticleIDs"].values).astype(np.int64)
