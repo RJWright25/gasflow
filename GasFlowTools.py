@@ -592,8 +592,8 @@ def analyse_subhalo(path,mcut,snapidx,nvol,ivol):
             print('satellite')
         print(f'barymp = {barymp:.3f}R200 = {barymp*r200_eff*1000:.1f} kpc (nfit = {nfit})')
 
-
-
+        barymp_rad=barymp
+        barymp_mstar=np.nansum(part_data_candidates.loc[np.logical_and(part_data_candidates.loc[:,"rrel_com"]<barymp,part_data_candidates.loc[:,"ParticleTypes"]==4),"Mass"])
 
         # """
         # Find the radius for a galaxy from the BaryMP method
