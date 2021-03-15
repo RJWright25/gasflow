@@ -779,7 +779,11 @@ def analyse_gasflow(path,mcut,snapidx,nvol,ivol,snapidx_delta=1,detailed=True,du
 
     if detailed:
         catalogue_subhalo_extended_ivol_fname=f'catalogues/subhalo/subhalo_snapidx_{snapidx2}_n_{str(nvol).zfill(2)}_volume_{str(ivol).zfill(3)}.hdf5'
-        catalogue_subhalo_extended_ivol=pd.read_hdf(catalogue_subhalo_extended_ivol_fname,key='Subhalo')
+        try:
+            catalogue_subhalo_extended_ivol=pd.read_hdf(catalogue_subhalo_extended_ivol_fname,key='Subhalo')
+        except:
+            catalogue_subhalo_extended_ivol=pd.read_hdf(catalogue_subhalo_extended_ivol_fname,key='Flux')
+
         detailed_fields=list(catalogue_subhalo_extended_ivol)
 
     #select relevant subhaloes
@@ -887,7 +891,7 @@ def analyse_gasflow(path,mcut,snapidx,nvol,ivol,snapidx_delta=1,detailed=True,du
         
 
         if dump and galaxy_snap2[f'ApertureMeasurements/Mass/030kpc_4']*10**10>10**10:
-            folder=f'catalogues/galaxies/snap_{snap}/group_{groupnumber}/subgroup_{subgroupnumber}'
+            folder=f'catalogues/galaxies/snap_{snapidx2}/group_{groupnumber}/subgroup_{subgroupnumber}'
             runningfolder=''
             for ifolder in folder.split('/'):
                 runningfolder+=f'/{ifolder}'
