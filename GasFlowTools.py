@@ -901,83 +901,55 @@ def analyse_gasflow(path,mcut,snapidx,nvol,ivol,snapidx_delta=1,detailed=True):
         if detailed:
             insidebarymp_snap2=part_data_candidates_snap2.loc[:,"r_com"]<galaxy_snap2_detailed['BaryMP-radius']
 
+        ism_30kpc_snap1=np.logical_and.reduce([subgroup_snap1,tempreq_snap1,inside_30kpc_snap1])
+        ism_30kpc_snap2=np.logical_and.reduce([subgroup_snap2,tempreq_snap2,inside_30kpc_snap2])
 
-       
+        sph_30kpc_snap1=np.logical_and.reduce([subgroup_snap1,inside_30kpc_snap1])
+        sph_30kpc_snap2=np.logical_and.reduce([subgroup_snap2,inside_30kpc_snap2])
 
+        if detailed:
+            ism_barymp_snap1=np.logical_and.reduce([subgroup_snap1,tempreq_snap1,insidebarymp_snap1])
+            ism_barymp_snap2=np.logical_and.reduce([subgroup_snap2,tempreq_snap2,insidebarymp_snap2])
+
+            sph_barymp_snap1=np.logical_and.reduce([subgroup_snap1,insidebarymp_snap1])
+            sph_barymp_snap2=np.logical_and.reduce([subgroup_snap2,insidebarymp_snap2])
         
-
-        #sfr criterion
-        # part_data_candidates_snap1["starforming-ism-hms"]=np.logical_and.reduce([part_data_candidates_snap1["Density"].values*nh_conversion>=0.1*(part_data_candidates_snap1["Metallicity"].values)**(-0.64),
-        #                                                                      part_data_candidates_snap1["Temperature"].values<=tfloor_eagle(part_data_candidates_snap1["Density"].values*nh_conversion)*10**0.5,
-        #                                                                      part_data_candidates_snap1["r_com"].values<=4*hmsradius]).astype(int)
-
-        # part_data_candidates_snap2["starforming-ism-hms"]=np.logical_and.reduce([part_data_candidates_snap2["Density"].values*nh_conversion>=0.1*(part_data_candidates_snap2["Metallicity"].values)**(-0.64),
-        #                                                                      part_data_candidates_snap2["Temperature"].values<=tfloor_eagle(part_data_candidates_snap2["Density"].values*nh_conversion)*10**0.5,
-        #                                                                      part_data_candidates_snap2["r_com"].values<=4*hmsradius]).astype(int)
-
-        # part_data_candidates_snap1["starforming-ism-30kpc"]=np.logical_and.reduce([part_data_candidates_snap1["Density"].values*nh_conversion>=0.1*(part_data_candidates_snap1["Metallicity"].values)**(-0.64),
-        #                                                                      part_data_candidates_snap1["Temperature"].values<=tfloor_eagle(part_data_candidates_snap1["Density"].values*nh_conversion)*10**0.5,
-        #                                                                      part_data_candidates_snap1["r_com"].values<=0.03]).astype(int)
-
-        # part_data_candidates_snap2["starforming-ism-30kpc"]=np.logical_and.reduce([part_data_candidates_snap2["Density"].values*nh_conversion>=0.1*(part_data_candidates_snap2["Metallicity"].values)**(-0.64),
-        #                                                                      part_data_candidates_snap2["Temperature"].values<=tfloor_eagle(part_data_candidates_snap2["Density"].values*nh_conversion)*10**0.5,
-        #                                                                      part_data_candidates_snap2["r_com"].values<=0.03]).astype(int)
- 
-
-
-        #atomic phase
-        part_data_candidates_snap1["atomic-ism-hms"]=np.logical_and.reduce([part_data_candidates_snap1["Density"].values*nh_conversion>=0.01,
-                                                                             part_data_candidates_snap1["Temperature"].values<=tfloor_eagle(part_data_candidates_snap1["Density"].values*nh_conversion)*10**0.5,
-                                                                             part_data_candidates_snap1["r_com"].values<=6*hmsradius]).astype(int)
-
-        part_data_candidates_snap2["atomic-ism-hms"]=np.logical_and.reduce([part_data_candidates_snap2["Density"].values*nh_conversion>=0.01,
-                                                                             part_data_candidates_snap2["Temperature"].values<=tfloor_eagle(part_data_candidates_snap2["Density"].values*nh_conversion)*10**0.5,
-                                                                             part_data_candidates_snap2["r_com"].values<=6*hmsradius]).astype(int)
-        
-        part_data_candidates_snap1["atomic-ism-30kpc"]=np.logical_and.reduce([part_data_candidates_snap1["Density"].values*nh_conversion>=0.01,
-                                                                             part_data_candidates_snap1["Temperature"].values<=tfloor_eagle(part_data_candidates_snap1["Density"].values*nh_conversion)*10**0.5,
-                                                                             part_data_candidates_snap1["r_com"].values<=0.03]).astype(int)
-
-        part_data_candidates_snap2["atomic-ism-30kpc"]=np.logical_and.reduce([part_data_candidates_snap2["Density"].values*nh_conversion>=0.01,
-                                                                             part_data_candidates_snap2["Temperature"].values<=tfloor_eagle(part_data_candidates_snap2["Density"].values*nh_conversion)*10**0.5,
-                                                                             part_data_candidates_snap2["r_com"].values<=0.03]).astype(int)
-
-
-    
-        #ism def - star forming at all within 8 hms or atomic within 4 hms
-        ism_hms_snap1=np.logical_or.reduce([part_data_candidates_snap1["atomic-ism-hms"].values])
-        ism_hms_snap2=np.logical_or.reduce([part_data_candidates_snap2["atomic-ism-hms"].values])
-        
-        ism_30kpc_snap1=np.logical_or.reduce([part_data_candidates_snap1["atomic-ism-30kpc"].values])
-        ism_30kpc_snap2=np.logical_or.reduce([part_data_candidates_snap2["atomic-ism-30kpc"].values])
-
-        #new ism particles
-        ism_partidx_in_hms=np.logical_and.reduce([np.logical_not(ism_hms_snap1),ism_hms_snap2,gas_snap1])
-        ism_partidx_in_30kpc=np.logical_and.reduce([np.logical_not(ism_30kpc_snap1),ism_30kpc_snap2,gas_snap1])
-
-        #removed ism particles
-        ism_partidx_out_hms=np.logical_and.reduce([ism_hms_snap1,np.logical_not(ism_hms_snap2),gas_snap1])
+        # particles in/ou
         ism_partidx_out_30kpc=np.logical_and.reduce([ism_30kpc_snap1,np.logical_not(ism_30kpc_snap2),gas_snap1])
+        ism_partidx_in_30kpc=np.logical_and.reduce([np.logical_not(ism_30kpc_snap1),ism_30kpc_snap2,gas_snap1])
+        sph_partidx_out_30kpc=np.logical_and.reduce([sph_30kpc_snap1,np.logical_not(sph_30kpc_snap2),gas_snap1])
+        sph_partidx_in_30kpc=np.logical_and.reduce([np.logical_not(sph_30kpc_snap1),sph_30kpc_snap2,gas_snap1])
 
-        gasflow_df.loc[igalaxy_snap2,'Inflow-ISM_HMS']=np.sum(part_data_candidates_snap2.loc[ism_partidx_in_hms,'Mass'])
-        gasflow_df.loc[igalaxy_snap2,'Outflow-ISM_HMS']=np.sum(part_data_candidates_snap2.loc[ism_partidx_out_hms,'Mass'])
-        gasflow_df.loc[igalaxy_snap2,'Inflow-ISM_30kpc']=np.sum(part_data_candidates_snap2.loc[ism_partidx_in_30kpc,'Mass'])
-        gasflow_df.loc[igalaxy_snap2,'Outflow-ISM_30kpc']=np.sum(part_data_candidates_snap2.loc[ism_partidx_out_30kpc,'Mass'])
+        if detailed:
+            ism_partidx_out_barymp=np.logical_and.reduce([ism_barymp_snap1,np.logical_not(ism_barymp_snap2),gas_snap1])
+            ism_partidx_in_barymp=np.logical_and.reduce([np.logical_not(ism_barymp_snap1),ism_barymp_snap2,gas_snap1])
+            sph_partidx_out_barymp=np.logical_and.reduce([sph_barymp_snap1,np.logical_not(sph_barymp_snap2),gas_snap1])
+            sph_partidx_in_barymp=np.logical_and.reduce([np.logical_not(sph_barymp_snap1),sph_barymp_snap2,gas_snap1])
 
-        #halo def (if central)
-        if icen:
-            for fac in r200_facs:
-                halo_snap1=np.logical_and.reduce([part_data_candidates_snap1["r_com"].values<fac*hostradius])
-                halo_snap2=np.logical_and.reduce([part_data_candidates_snap2["r_com"].values<fac*hostradius])
-                
-                #new halo particles
-                halo_partidx_in=np.logical_and(np.logical_not(halo_snap1),halo_snap2)
-                #removed halo particles
-                halo_partidx_out=np.logical_and(halo_snap1,np.logical_not(halo_snap2)) 
-                
-                #sum masses
-                gasflow_df.loc[igalaxy_snap2,f'Inflow-{fac:.3f}R200']=np.sum(part_data_candidates_snap2.loc[halo_partidx_in,'Mass'])
-                gasflow_df.loc[igalaxy_snap2,f'Outflow-{fac:.3f}R200']=np.sum(part_data_candidates_snap2.loc[halo_partidx_out,'Mass'])
+        gasflow_df.loc[igalaxy_snap2,'inflow-ism_30kpc']=np.sum(part_data_candidates_snap2.loc[ism_partidx_in_30kpc,'Mass'])
+        gasflow_df.loc[igalaxy_snap2,'outflow-ism_30kpc']=np.sum(part_data_candidates_snap2.loc[ism_partidx_out_30kpc,'Mass'])
+        gasflow_df.loc[igalaxy_snap2,'inflow-sph_30kpc']=np.sum(part_data_candidates_snap2.loc[sph_partidx_in_30kpc,'Mass'])
+        gasflow_df.loc[igalaxy_snap2,'outflow-sph_30kpc']=np.sum(part_data_candidates_snap2.loc[sph_partidx_out_30kpc,'Mass'])
+
+        if detailed:
+            gasflow_df.loc[igalaxy_snap2,'inflow-ism_barymp']=np.sum(part_data_candidates_snap2.loc[ism_partidx_in_barymp,'Mass'])
+            gasflow_df.loc[igalaxy_snap2,'outflow-ism_barymp']=np.sum(part_data_candidates_snap2.loc[ism_partidx_out_barymp,'Mass'])
+            gasflow_df.loc[igalaxy_snap2,'inflow-sph_barymp']=np.sum(part_data_candidates_snap2.loc[sph_partidx_in_barymp,'Mass'])
+            gasflow_df.loc[igalaxy_snap2,'outflow-sph_barymp']=np.sum(part_data_candidates_snap2.loc[sph_partidx_out_barymp,'Mass'])
+
+        #halo def
+        for fac in r200_facs:
+            halo_snap1=np.logical_and.reduce([part_data_candidates_snap1["r_com"].values<fac*candidate_radius])
+            halo_snap2=np.logical_and.reduce([part_data_candidates_snap2["r_com"].values<fac*candidate_radius])
+            
+            #new halo particles
+            halo_partidx_in=np.logical_and.reduce([np.logical_not(halo_snap1),halo_snap2,gas_snap1])
+            #removed halo particles
+            halo_partidx_out=np.logical_and.reduce([halo_snap1,np.logical_not(halo_snap2),gas_snap1]) 
+            
+            #sum masses
+            gasflow_df.loc[igalaxy_snap2,f'inflow-{fac:.3f}r200']=np.sum(part_data_candidates_snap2.loc[halo_partidx_in,'Mass'])
+            gasflow_df.loc[igalaxy_snap2,f'outflow-{fac:.3f}r200']=np.sum(part_data_candidates_snap2.loc[halo_partidx_out,'Mass'])
 
         if icen:
             logging.info(f'Done with galaxy {iigalaxy+1} of {numgal_subvolume} for this subvolume - CENTRAL [runtime = {time.time()-t0:.2f}s]')
@@ -989,23 +961,15 @@ def analyse_gasflow(path,mcut,snapidx,nvol,ivol,snapidx_delta=1,detailed=True):
 
     logging.info(f'{np.sum(success):.0f} of {len(success):.0f} galaxies were successfully processed ({np.nanmean(success)*100:.1f}%) [runtime = {time.time()-t0:.2f}s]')
 
-
     gasflow_df.to_hdf(output_fname,key='Flux')
     print(gasflow_df)
 
-def combine_catalogues(mcut,snapidxs,nvol,snapidx_deltas=[1]):
+def combine_catalogues(mcut,snapidxs,nvol,snapidx_delta=1):
     
-    outname=f'catalogues/catalogue_gasflow_nvol_{str(nvol).zfill(2)}_mcut_{str(mcut).zfill(2)}.hdf5'
+    outname=f'catalogues/catalogue_gasflow_nvol_{str(nvol).zfill(2)}_mcut_{str(mcut).zfill(2)}_delta_{str(snapidx_delta).zfill(2)}.hdf5'
     catalogue_subhalo=pd.read_hdf('catalogues/catalogue_subhalo.hdf5',key='Subhalo')
     catalogue_subhalo=catalogue_subhalo.loc[np.logical_and(np.logical_or.reduce([catalogue_subhalo['snapshotidx']==snapidx for snapidx in snapidxs]),catalogue_subhalo['ApertureMeasurements/Mass/030kpc_4']>=10**mcut/10**10),:]
     catalogue_subhalo.reset_index()
-
-    accretion_fields=['Inflow-ISM_HMS',
-                      'Inflow-ISM_30kpc', 'Outflow-ISM_HMS', 'Outflow-ISM_30kpc',
-                      'Inflow-0.125R200', 'Outflow-0.125R200', 'Inflow-0.250R200',
-                      'Outflow-0.250R200', 'Inflow-0.500R200', 'Outflow-0.500R200',
-                      'Inflow-0.750R200', 'Outflow-0.750R200', 'Inflow-1.000R200',
-                      'Outflow-1.000R200']
     
     accfile_data_vols=[]
 
@@ -1014,34 +978,24 @@ def combine_catalogues(mcut,snapidxs,nvol,snapidx_deltas=[1]):
     for snapidx in snapidxs:
         ivol=0
         for ivol in range(nvol**3):
-            idelta=0
-            for delta in snapidx_deltas:
-                accretion_fields_idelta=[accretion_field+f'-delta_{str(delta).zfill(2)}' for accretion_field in accretion_fields]
-                fields_idelta=np.concatenate([["nodeIndex"],accretion_fields_idelta])
-                fields_orig=np.concatenate([["nodeIndex"],accretion_fields])
-                if idelta==0:
-                    print(f'Loading volume {ivol+1}/{nvol**3} for snap {snapidx} (delta {delta})')
-                try:
-                    accfile_data_file=pd.read_hdf(f'catalogues/gasflow/gasflow_snapidx_{snapidx}_delta_{str(delta).zfill(3)}_n_{str(nvol).zfill(2)}_volume_{str(ivol).zfill(3)}.hdf5',key='Flux')
-                    # print(accfile_data_file.shape[0],' subhaloes in subvolume')
-                except:
-                    print(f'Could not load volume {ivol}')
-                    continue
-                
-                accfile_data_new=pd.DataFrame(accfile_data_file.loc[:,fields_orig].values,columns=fields_idelta)
+            print(f'Loading volume {ivol+1}/{nvol**3} for snap {snapidx} (delta {snapidx_delta})')
+            try:
+                accfile_data_file=pd.read_hdf(f'catalogues/gasflow/gasflow_snapidx_{snapidx}_delta_{str(snapidx_delta).zfill(3)}_n_{str(nvol).zfill(2)}_volume_{str(ivol).zfill(3)}.hdf5',key='Flux')
+                if ifile==0:
+                    accfields=list(accfile_data_file)
+                # print(accfile_data_file.shape[0],' subhaloes in subvolume')
+            except:
+                print(f'Could not load volume {ivol}')
+                continue
 
-                if idelta==0:
-                    accfile_data_isnap_ivol=accfile_data_new
-                else:
-                    accfile_data_isnap_ivol.loc[:,accretion_fields_idelta]=accfile_data_new.loc[:,accretion_fields_idelta].values
-
-                idelta+=1
+            accfile_data_isnap_ivol=accfile_data_file.loc[:,:]
             accfile_data_vols.append(accfile_data_isnap_ivol)
+            
+            ifile+=1
             ivol+=1
         isnap+=1
 
     accfile_data=pd.concat(accfile_data_vols,ignore_index=True)
-    print(accfile_data)
 
     ngal=accfile_data.shape[0]
     iigal=0
@@ -1050,7 +1004,6 @@ def combine_catalogues(mcut,snapidxs,nvol,snapidx_deltas=[1]):
             print(f'{iigal/ngal*100:.1f}% done with matching ...')
         nodeidx=gal['nodeIndex']
         match=nodeidx==catalogue_subhalo['nodeIndex']
-        accfields=list(accfile_data)
         catalogue_subhalo.loc[match,accfields]=gal.values
         iigal+=1
 
@@ -1058,8 +1011,6 @@ def combine_catalogues(mcut,snapidxs,nvol,snapidx_deltas=[1]):
         os.remove(outname)
     
     catalogue_subhalo.to_hdf(outname,key='Subhalo')
-
-
 
 
 
