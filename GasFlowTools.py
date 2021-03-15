@@ -617,7 +617,7 @@ def analyse_subhalo(path,mcut,snapidx,nvol,ivol):
     output_df.to_hdf(output_fname,key='Subhalo')
     print(output_df)
 
-def analyse_gasflow(path,mcut,snapidx,nvol,ivol,snapidx_delta=1,detailed=True):
+def analyse_gasflow(path,mcut,snapidx,nvol,ivol,snapidx_delta=1,detailed=True,dump=False):
 
     ivol=int(ivol)
     ivol=str(ivol).zfill(3)
@@ -819,6 +819,7 @@ def analyse_gasflow(path,mcut,snapidx,nvol,ivol,snapidx_delta=1,detailed=True):
         
         nodeidx=galaxy_snap2['nodeIndex']
         subgroupnumber=galaxy_snap2['SubGroupNumber']
+        groupnumber=galaxy_snap2['GroupNumber']
         progidx=find_progidx(catalogue_subhalo,nodeidx=nodeidx,snapidx_delta=snapidx_delta)
 
         if subgroupnumber==0:
@@ -884,6 +885,21 @@ def analyse_gasflow(path,mcut,snapidx,nvol,ivol,snapidx_delta=1,detailed=True):
         # part_data_candidates_snap1.loc[:,[f"Velocity_{x}rel" for x in 'xyz']]=np.column_stack([part_data_candidates_snap1[f'Velocity_{x}']-vcom_snap1[ix] for ix,x in enumerate('xyz')])
         # part_data_candidates_snap1["vrad_inst"]=np.sum(np.multiply(np.column_stack([part_data_candidates_snap1[f"Velocity_{x}rel"] for x in 'xyz']),np.column_stack([part_data_candidates_snap1[f"runit_{x}rel"] for x in 'xyz'])),axis=1)
         
+
+        if dump and galaxy_snap2[f'ApertureMeasurements/Mass/030kpc_4']*10**10>10**10:
+            folder=f'catalogues/galaxies/snap_{snap}/group_{groupnumber}/subgroup_{subgroupnumber}'
+            runningfolder=''
+            for ifolder in folder.split('/')
+                runningfolder+=f'/{ifolder}'
+                if not os.path.exists(runningfolder):
+                    os.mkdir(runningfolder)
+
+            snap1data=part_data_candidates_snap1.loc[:,:]
+            snap2data=part_data_candidates_snap2.loc[:,:]
+
+            snap1data.to_hdf(f'{folder}/initial.hdf5',key='Galaxy')
+            snap2data.to_hdf(f'{folder}/final.hdf5',key='Galaxy')
+            
         #masks snap 1
         gas_snap1=part_data_candidates_snap1["ParticleTypes"].values==0
         subgroup_snap1=part_data_candidates_snap1["SubGroupNumber"].values==subgroupnumber_snap1
@@ -1011,7 +1027,6 @@ def combine_catalogues(mcut,snapidxs,nvol,snapidx_delta=1):
         os.remove(outname)
     
     catalogue_subhalo.to_hdf(outname,key='Subhalo')
-
 
 
 #lower level
