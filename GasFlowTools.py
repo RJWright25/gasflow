@@ -568,21 +568,24 @@ def analyse_subhalo(path,mcut,snapidx,nvol,ivol):
             r200_eff=r200(m200=galaxy['Mass']*10**10,rhocrit=rhocrit)
         
         part_idx_within_radius=kdtree_snap1_periodic.query_ball_point(com,r200_eff)
-        part_IDs_within_radius=(particledata_snap.loc[part_idx_within_radius,"ParticleIDs"].values).astype(np.int64)
+        npart_galaxy=len(part_idx_within_radius)
 
+        part_IDs_within_radius=(particledata_snap.loc[part_idx_within_radius,"ParticleIDs"].values).astype(np.int64)
         part_idx_candidates=particledata_snap['ParticleIDs'].searchsorted(part_IDs_within_radius)
         part_data_candidates=particledata_snap.loc[part_idx_candidates,:]
         part_data_candidates.loc[:,"rrel_com"]=np.sqrt(np.sum(np.square(np.column_stack([part_data_candidates[f'Coordinates_{x}']-com[ix] for ix,x in enumerate('xyz')])),axis=1))/r200_eff #Mpc
 
+
         totbaryonmass=np.nansum(part_data_candidates.loc[:,"Mass"])
         
         #fit baryon mass profile
-        r200_bins=10**np.linspace(-2,0,26)
+        ncomp=int(np.floor(npart_galaxy/20))
+        r200_bins=10**np.linspace(-2.5,0,ncomp+1)
         r200_bins_mid=r200_bins[1:]
         masks=[np.logical_and(part_data_candidates["rrel_com"]>bin_lo,part_data_candidates["rrel_com"]<bin_hi) for bin_lo, bin_hi in zip(r200_bins[:-1],r200_bins[1:])]
         mass_binned=[np.nansum(part_data_candidates.loc[mask,"Mass"]) for mask in masks]
         mass_binned_cumulative=np.cumsum(mass_binned)/totbaryonmass
-        print(mass_binned_cumulative)
+        print(np.column_stack([r200_bins_mid,mass_binned_cumulative]))
 
 
         # """
