@@ -563,7 +563,10 @@ def analyse_subhalo(path,mcut,snapidx,nvol,ivol):
         if icen:
             r200=galaxy['Group_R_Crit200']
         else:
-            r200=r200(m200=galaxy['Mass']*10**10,rhocrit=(cosmology.critical_density(redshift)).to(units.Msun/units.Mpc**3).value)
+            rhocrit=cosmology.critical_density(redshift)
+            rhocrit=rhocrit.to(units.Msun/units.Mpc**3)
+            rhocrit=rhocrit.value
+            r200=r200(m200=galaxy['Mass']*10**10,rhocrit=rhocrit)
 
         print(icen,galaxy['Mass']*10**10,r200)
 
