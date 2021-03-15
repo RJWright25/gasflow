@@ -572,7 +572,7 @@ def analyse_subhalo(path,mcut,snapidx,nvol,ivol):
         for part_idx_within_radius in part_idxs_within_radius:
             partselect_mask[part_idx_within_radius]=1
 
-        partdata_selected=particledata_snap[partselect_mask,:]
+        partdata_selected=particledata_snap.loc[partselect_mask,:]
         partdata_selected.loc[:,"r_com"]=np.sqrt(np.sum(np.square(np.column_stack([partdata_selected[f'Coordinates_{x}']-com[ix] for ix,x in enumerate('xyz')])),axis=1))#Mpc
 
         print(partdata_selected.loc[:,"r_com"])
