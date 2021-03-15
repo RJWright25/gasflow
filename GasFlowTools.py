@@ -986,9 +986,7 @@ def analyse_gasflow(path,mcut,snapidx,nvol,ivol,snapidx_delta=1,detailed=True,du
         success.append(1)
 
     logging.info(f'{np.sum(success):.0f} of {len(success):.0f} galaxies were successfully processed ({np.nanmean(success)*100:.1f}%) [runtime = {time.time()-t0:.2f}s]')
-
     gasflow_df.to_hdf(output_fname,key='Flux')
-    print(gasflow_df.loc[:,['BaryMP-radius','BaryMP-mstar','inflow-ism_barymp','outflow-ism_barymp','inflow-sph_barymp','outflow-sph_barymp']])
 
 def combine_catalogues(mcut,snapidxs,nvol,snapidx_delta=1):
     
@@ -1037,7 +1035,6 @@ def combine_catalogues(mcut,snapidxs,nvol,snapidx_delta=1):
         os.remove(outname)
     
     catalogue_subhalo.to_hdf(outname,key='Subhalo')
-
 
 #lower level
 
@@ -1110,9 +1107,6 @@ def BaryMP(x,y,eps=0.01,grad=1):
 	Nfit = len(x2fit) # Number of points on the profile fitted to in the end
 
 	return r_bmp, Nfit
-
-
-
 
 
 # orbweaver
