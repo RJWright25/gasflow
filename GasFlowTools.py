@@ -471,7 +471,7 @@ def analyse_subhalo(path,mcut,snapidx,nvol,ivol):
     particledata_snap_star.loc[:,"ParticleTypes"]=4;particledata_snap_star.loc[:,"Temperature"]=-1.;particledata_snap_star.loc[:,"Density"]=10**10
 
     logging.info(f'Reading gas datasets [runtime = {time.time()-t0:.2f}s]')
-    for dset in ['Coordinates','Velocity','Mass','Density','Temperature','Metallicity']:
+    for dset in ['Coordinates','Velocity','Mass','Density','Temperature','Metallicity','SubGroupNumber']:
         dset_snap=snapidx_eagledata.read_dataset(0,dset)
         if dset_snap.shape[-1]==3:
                 particledata_snap.loc[:,[f'{dset}_x',f'{dset}_y',f'{dset}_z']]=dset_snap
@@ -482,7 +482,7 @@ def analyse_subhalo(path,mcut,snapidx,nvol,ivol):
                 particledata_snap[dset]=dset_snap
 
     logging.info(f'Reading star datasets [runtime = {time.time()-t0:.2f}s]')
-    for dset in ['Coordinates','Velocity','Mass']:
+    for dset in ['Coordinates','Velocity','Mass','SubGroupNumber']:
         dset_snap=snapidx_eagledata.read_dataset(4,dset)
         if dset_snap.shape[-1]==3:
             particledata_snap_star.loc[:,[f'{dset}_x',f'{dset}_y',f'{dset}_z']]=dset_snap
@@ -572,11 +572,11 @@ def analyse_subhalo(path,mcut,snapidx,nvol,ivol):
 
         part_idx_candidates=particledata_snap['ParticleIDs'].searchsorted(part_IDs_within_radius)
         part_data_candidates=particledata_snap.loc[part_idx_candidates,:]
+        part_data_candidates.loc[:,"rrel_com"]=np.sqrt(np.sum(np.square(np.column_stack([part_data_candidates[f'Coordinates_{x}']-com[ix] for ix,x in enumerate('xyz')])),axis=1))/r200_eff #Mpc
+
+
         
-        part_data_candidates.loc[:,"r_com"]=np.sqrt(np.sum(np.square(np.column_stack([part_data_candidates[f'Coordinates_{x}']-com[ix] for ix,x in enumerate('xyz')])),axis=1))#Mpc
-
-        print(part_data_candidates.loc[:,"r_com"])
-
+        print(part_data_candidates.loc[:,"rrel_com"])
         # print(icen,f"{galaxy['Mass']*10**10:.1e}",f" | eff radius: {r200_eff*1000:.2f} kpc | host radius {r200_host*1000:.2f} kpc |")
 
 
