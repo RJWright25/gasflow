@@ -424,7 +424,7 @@ def match_fof(mcut,snapidxs=[]):
     os.remove(outname)
     catalogue_subhalo.to_hdf(outname,key='Subhalo')
 
-def analse_subhalo(path,mcut,snapidx,nvol,ivol):
+def analyse_subhalo(path,mcut,snapidx,nvol,ivol):
     ivol=int(ivol)
     ivol=str(ivol).zfill(3)
     ix,iy,iz=ivol_idx(ivol,nvol=nvol)
