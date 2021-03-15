@@ -798,7 +798,6 @@ def analyse_gasflow(path,mcut,snapidx,nvol,ivol,snapidx_delta=1,detailed=True,du
     #initialise output
     initfields=['nodeIndex','GroupNumber','SubGroupNumber']
     gasflow_df=catalogue_subhalo.loc[snap2_com_mask,initfields]
-    print(gasflow_df)
 
     gasflow_df.loc[:,'inflow-sph_30kpc']=np.nan
     gasflow_df.loc[:,'inflow-ism_30kpc']=np.nan
@@ -811,6 +810,9 @@ def analyse_gasflow(path,mcut,snapidx,nvol,ivol,snapidx_delta=1,detailed=True,du
         gasflow_df.loc[:,'outflow-sph_barymp']=np.nan
         gasflow_df.loc[:,'outflow-ism_barymp']=np.nan
         gasflow_df.loc[:,detailed_fields]=np.nan
+    
+    print(gasflow_df)
+    print(gasflow_df.shape)
 
 
     r200_facs=[0.1,0.15,0.2,0.25,0.5,0.75,1]
@@ -984,6 +986,7 @@ def analyse_gasflow(path,mcut,snapidx,nvol,ivol,snapidx_delta=1,detailed=True,du
 
     gasflow_df.to_hdf(output_fname,key='Flux')
     print(gasflow_df)
+    print(gasflow_df.shape)
 
 def combine_catalogues(mcut,snapidxs,nvol,snapidx_delta=1):
     
