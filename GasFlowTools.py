@@ -611,7 +611,7 @@ def analyse_subhalo(path,mcut,snapidx,nvol,ivol):
 
     logging.info(f'{np.sum(success):.0f} of {len(success):.0f} galaxies were successfully processed ({np.nanmean(success)*100:.1f}%) [runtime = {time.time()-t0:.2f}s]')
 
-    output_df.to_hdf(output_fname,key='Flux')
+    output_df.to_hdf(output_fname,key='Subhalo')
     print(output_df)
 
 
