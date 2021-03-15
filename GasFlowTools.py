@@ -644,7 +644,7 @@ def analyse_gasflow(path,mcut,snapidx,nvol,ivol,snapidx_delta=1,detailed=True):
 
     cosmology=FlatLambdaCDM(H0=h5py.File(snapidx2_particledatapath,'r')['Header'].attrs['HubbleParam']*100,
                             Om0=h5py.File(snapidx2_particledatapath,'r')['Header'].attrs['Omega0'])
-
+    redshift=h5py.File(snapidx2_particledatapath,'r')['Header'].attrs['Redshift']
     rhocrit=cosmology.critical_density(redshift)
     rhocrit=rhocrit.to(units.Msun/units.Mpc**3)
     rhocrit=rhocrit.value
