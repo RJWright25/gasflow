@@ -617,8 +617,7 @@ def analyse_subhalo(path,mcut,snapidx,nvol,ivol):
     output_df.to_hdf(output_fname,key='Subhalo')
     print(output_df)
 
-
-def analyse_gasflow(path,mcut,snapidx,nvol,ivol,snapidx_delta=1):
+def analyse_gasflow(path,mcut,snapidx,nvol,ivol,snapidx_delta=1,detailed=True):
 
     ivol=int(ivol)
     ivol=str(ivol).zfill(3)
@@ -645,6 +644,10 @@ def analyse_gasflow(path,mcut,snapidx,nvol,ivol,snapidx_delta=1):
 
     cosmology=FlatLambdaCDM(H0=h5py.File(snapidx2_particledatapath,'r')['Header'].attrs['HubbleParam']*100,
                             Om0=h5py.File(snapidx2_particledatapath,'r')['Header'].attrs['Omega0'])
+
+    rhocrit=cosmology.critical_density(redshift)
+    rhocrit=rhocrit.to(units.Msun/units.Mpc**3)
+    rhocrit=rhocrit.value
 
     snapidx1_z=h5py.File(snapidx1_particledatapath,'r')['Header'].attrs['Redshift'];snapidx1_lt=cosmology.lookback_time(snapidx1_z)
     snapidx2_z=h5py.File(snapidx2_particledatapath,'r')['Header'].attrs['Redshift'];snapidx2_lt=cosmology.lookback_time(snapidx2_z)
@@ -679,7 +682,7 @@ def analyse_gasflow(path,mcut,snapidx,nvol,ivol,snapidx_delta=1):
     particledata_snap2_star=pd.DataFrame(snapidx2_eagledata.read_dataset(4,'ParticleIDs'),columns=['ParticleIDs']);particledata_snap2_star.loc[:,"ParticleTypes"]=4;particledata_snap2_star.loc[:,"Temperature"]=-1.;particledata_snap2_star.loc[:,"Density"]=10**10
 
     logging.info(f'Reading gas datasets [runtime = {time.time()-t0:.2f}s]')
-    for dset in ['Coordinates','Velocity','Mass','Density','Temperature','Metallicity']:
+    for dset in ['Coordinates','Velocity','Mass','Density','Temperature','Metallicity','SubGroupNumber']:
         dset_snap1=snapidx1_eagledata.read_dataset(0,dset)
         dset_snap2=snapidx2_eagledata.read_dataset(0,dset)
         if dset_snap2.shape[-1]==3:
@@ -774,6 +777,11 @@ def analyse_gasflow(path,mcut,snapidx,nvol,ivol,snapidx_delta=1):
     catalogue_subhalo=pd.read_hdf('catalogues/catalogue_subhalo.hdf5',key='Subhalo')
     catalogue_subhalo=catalogue_subhalo.loc[np.logical_and(catalogue_subhalo['snapshotidx']<=snapidx2,catalogue_subhalo['snapshotidx']>=snapidx1),:]
 
+    if detailed:
+        catalogue_subhalo_extended_ivol_fname=f'catalogues/subhalo/subhalo_snapidx_{snapidx2}_n_{str(nvol).zfill(2)}_volume_{str(ivol).zfill(3)}.hdf5'
+        catalogue_subhalo_extended_ivol=pd.read_hdf(catalogue_subhalo_extended_ivol_fname,key='Subhalo')
+        detailed_fields=list(catalogue_subhalo_extended_ivol)
+
     #select relevant subhaloes
     snap2_mask=catalogue_subhalo[f'snapshotidx']==snapidx2
     snap2_mass_mask=catalogue_subhalo[f'ApertureMeasurements/Mass/030kpc_4']>=10**mcut/10**10
@@ -804,7 +812,6 @@ def analyse_gasflow(path,mcut,snapidx,nvol,ivol,snapidx_delta=1):
         nodeidx=galaxy_snap2['nodeIndex']
         subgroupnumber=galaxy_snap2['SubGroupNumber']
         progidx=find_progidx(catalogue_subhalo,nodeidx=nodeidx,snapidx_delta=snapidx_delta)
-        print(progidx)
 
         if subgroupnumber==0:
             icen=True
@@ -826,13 +833,16 @@ def analyse_gasflow(path,mcut,snapidx,nvol,ivol,snapidx_delta=1):
         vcom_snap2=[galaxy_snap2[f"Velocity_{x}"] for x in 'xyz']
         vcom_snap1=[galaxy_snap1[f"Velocity_{x}"].values[0] for x in 'xyz']
 
+        if detailed:    
+            galaxy_snap2_detailed=catalogue_subhalo_extended_ivol.loc[igalaxy_snap2,detailed_fields]
+            print(galaxy_snap2_detailed)
+
         #select particles in halo-size sphere
         hostradius=(np.float(galaxy_snap2['Group_R_Crit200'])+np.float(galaxy_snap1['Group_R_Crit200']))/2
-        hmsradius=(np.float(galaxy_snap2['HalfMassRad_4'])+np.float(galaxy_snap1['HalfMassRad_4']))/2
         if icen:
             candidate_radius=hostradius
         else:
-            candidate_radius=8*hmsradius
+            candidate_radius=r200(galaxy_snap2['Mass']*10**10,rhocrit=rhocrit)
 
         part_idx_candidates_snap2=kdtree_snap2_periodic.query_ball_point(com_snap2,candidate_radius)
         part_idx_candidates_snap1=kdtree_snap1_periodic.query_ball_point(com_snap1,candidate_radius)
@@ -865,15 +875,11 @@ def analyse_gasflow(path,mcut,snapidx,nvol,ivol,snapidx_delta=1):
         # part_data_candidates_snap1.loc[:,[f"Velocity_{x}rel" for x in 'xyz']]=np.column_stack([part_data_candidates_snap1[f'Velocity_{x}']-vcom_snap1[ix] for ix,x in enumerate('xyz')])
         # part_data_candidates_snap1["vrad_inst"]=np.sum(np.multiply(np.column_stack([part_data_candidates_snap1[f"Velocity_{x}rel"] for x in 'xyz']),np.column_stack([part_data_candidates_snap1[f"runit_{x}rel"] for x in 'xyz'])),axis=1)
         
-        # part_data_candidates_snap2["vrad_ave"]=(part_data_candidates_snap2["r_com"].values-part_data_candidates_snap1["r_com"].values)/delta_lt*978.5#to km/s
-        # part_data_candidates_snap1["vrad_ave"]=(part_data_candidates_snap2["r_com"].values-part_data_candidates_snap1["r_com"].values)/delta_lt*978.5#to km/s
-
-        #removing temporary data
-        # for dset in np.concatenate([[f"runit_{x}rel" for x in 'xyz'],[f"Velocity_{x}rel" for x in 'xyz'],[f'Coordinates_{x}' for x in 'xyz'],[f'Velocity_{x}' for x in 'xyz']]):
-        #     del part_data_candidates_snap1[dset]
-        #     del part_data_candidates_snap2[dset]
-
+        #masks snap 1
         gas_snap1=part_data_candidates_snap1["ParticleTypes"].values==0
+
+        #masks snap 2
+        subgroup_snap2=part_data_candidates_snap1["SubGroupNumber"].values==subgroupnumber
 
         #sfr criterion
         # part_data_candidates_snap1["starforming-ism-hms"]=np.logical_and.reduce([part_data_candidates_snap1["Density"].values*nh_conversion>=0.1*(part_data_candidates_snap1["Metallicity"].values)**(-0.64),
@@ -963,6 +969,7 @@ def analyse_gasflow(path,mcut,snapidx,nvol,ivol,snapidx_delta=1):
     print(gasflow_df)
 
 def combine_catalogues(mcut,snapidxs,nvol,snapidx_deltas=[1]):
+    
     outname=f'catalogues/catalogue_gasflow_nvol_{str(nvol).zfill(2)}_mcut_{str(mcut).zfill(2)}.hdf5'
     catalogue_subhalo=pd.read_hdf('catalogues/catalogue_subhalo.hdf5',key='Subhalo')
     catalogue_subhalo=catalogue_subhalo.loc[np.logical_and(np.logical_or.reduce([catalogue_subhalo['snapshotidx']==snapidx for snapidx in snapidxs]),catalogue_subhalo['ApertureMeasurements/Mass/030kpc_4']>=10**mcut/10**10),:]
