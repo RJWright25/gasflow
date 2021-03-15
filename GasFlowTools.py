@@ -10,6 +10,7 @@ import pandas as pd
 from read_eagle import EagleSnapshot
 from scipy.spatial import cKDTree
 from astropy.cosmology import FlatLambdaCDM
+from astropy import units
 
 #high level
 
@@ -314,7 +315,6 @@ def extract_subhalo(path,mcut,snapidxmin=0,overwrite=True):
     except:
         data.to_hdf(f'catalogues/catalogue_subhalo-BACKUP.hdf5',key='Subhalo')
 
-def postprocess_subhalo(path,mcut,snapidx,nvol,ivol,snapidx_delta=1):
     pass
 
 def match_tree(mcut,snapidxs=[]):
@@ -423,6 +423,150 @@ def match_fof(mcut,snapidxs=[]):
 
     os.remove(outname)
     catalogue_subhalo.to_hdf(outname,key='Subhalo')
+
+def analse_subhalo(path,mcut,snapidx,nvol,ivol):
+    ivol=int(ivol)
+    ivol=str(ivol).zfill(3)
+    ix,iy,iz=ivol_idx(ivol,nvol=nvol)
+
+    t0=time.time()
+    logfile=f'logs/subhalo/subhalo_snapidx_{snapidx}_n_{str(nvol).zfill(2)}_volume_{ivol}.log'
+    if os.path.exists(logfile):
+        os.remove(logfile)
+    logging.basicConfig(filename=logfile, level=logging.INFO)
+    
+    output_fname=f'catalogues/subhalo/subhalo_snapidx_{snapidx}_n_{str(nvol).zfill(2)}_volume_{str(ivol).zfill(3)}.hdf5'
+    if os.path.exists(output_fname):
+        os.remove(output_fname)
+
+    redshift_table=pd.read_hdf('snapshot_redshifts.hdf5',key='snapshots')
+
+    snapidx_tag=redshift_table.loc[redshift_table['snapshotidx']==snapidx,'tag']
+    snapidx_particledatapath=f'{path}/particledata_{snapidx_tag}/eagle_subfind_snip_particles_{snapidx_tag[5:]}.0.hdf5'
+    
+    #read data
+    boxsize=h5py.File(snapidx_particledatapath,'r')['Header'].attrs['BoxSize']
+    redshift=h5py.File(snapidx_particledatapath,'r')['Header'].attrs['Redshift']
+    subvol_edgelength=boxsize/nvol
+    buffer=subvol_edgelength/10
+    cosmology=FlatLambdaCDM(H0=h5py.File(snapidx_particledatapath,'r')['Header'].attrs['HubbleParam']*100,
+                            Om0=h5py.File(snapidx_particledatapath,'r')['Header'].attrs['Omega0'])
+
+    xmin=ix*subvol_edgelength;xmax=(ix+1)*subvol_edgelength
+    ymin=iy*subvol_edgelength;ymax=(iy+1)*subvol_edgelength
+    zmin=iz*subvol_edgelength;zmax=(iz+1)*subvol_edgelength
+
+    logging.info(f'Considering region: (1/{nvol**3} of full box) [runtime = {time.time()-t0:.2f}s]')
+    logging.info(f'ix: {ix} - x in [{xmin},{xmax}]')
+    logging.info(f'iy: {iy} - y in [{ymin},{ymax}]')
+    logging.info(f'iz: {iz} - z in [{zmin},{zmax}]')
+
+    snapidx_eagledata = EagleSnapshot(snapidx_particledatapath)
+    snapidx_eagledata.select_region(xmin-buffer, xmax+buffer, ymin-buffer, ymax+buffer, zmin-buffer, zmax+buffer)
+
+    logging.info(f'Initialising particle data with IDs [runtime = {time.time()-t0:.2f}s]')
+    particledata_snap=pd.DataFrame(snapidx_eagledata.read_dataset(0,'ParticleIDs'),columns=['ParticleIDs'])
+    particledata_snap.loc[:,"ParticleTypes"]=0
+    particledata_snap_star=pd.DataFrame(snapidx_eagledata.read_dataset(4,'ParticleIDs'),columns=['ParticleIDs'])
+    particledata_snap_star.loc[:,"ParticleTypes"]=4;particledata_snap_star.loc[:,"Temperature"]=-1.;particledata_snap_star.loc[:,"Density"]=10**10
+
+    logging.info(f'Reading gas datasets [runtime = {time.time()-t0:.2f}s]')
+    for dset in ['Coordinates','Velocity','Mass','Density','Temperature','Metallicity']:
+        dset_snap=snapidx_eagledata.read_dataset(0,dset)
+        if dset_snap.shape[-1]==3:
+                particledata_snap.loc[:,[f'{dset}_x',f'{dset}_y',f'{dset}_z']]=dset_snap
+        else:
+            if dset=='Mass':
+                particledata_snap[dset]=dset_snap
+            else:
+                particledata_snap[dset]=dset_snap
+
+    logging.info(f'Reading star datasets [runtime = {time.time()-t0:.2f}s]')
+    for dset in ['Coordinates','Velocity','Mass']:
+        dset_snap=snapidx_eagledata.read_dataset(4,dset)
+        if dset_snap.shape[-1]==3:
+            particledata_snap_star.loc[:,[f'{dset}_x',f'{dset}_y',f'{dset}_z']]=dset_snap
+        else:
+            if dset=='Mass':
+                particledata_snap_star[dset]=dset_snap
+            else:
+                particledata_snap_star[dset]=dset_snap
+
+    logging.info(f'Done reading datasets - concatenating gas and star data [runtime = {time.time()-t0:.2f}s]')
+    particledata_snap=particledata_snap.append(particledata_snap_star,ignore_index=True)
+
+    logging.info(f'Sorting by IDs [runtime = {time.time()-t0:.2f}s]')
+    particledata_snap.sort_values(by="ParticleIDs",inplace=True);particledata_snap.reset_index(inplace=True,drop=True)
+    size1=np.sum(particledata_snap.memory_usage().values)/10**9
+    
+    logging.info(f'Particle data snap 1 memory usage: {size1:.2f} GB')
+
+    #particle KD trees
+    logging.info(f'Searching for existing KDTree [runtime = {time.time()-t0:.2f}s]')
+    treefname1=f'catalogues/kdtrees/kdtree_snapidx_{snapidx}_n_{str(nvol).zfill(2)}_volume_{ivol}.dat'
+    if os.path.exists(treefname1):
+        logging.info(f'Loading existing KDTree for snap 1 [runtime = {time.time()-t0:.2f}s]')
+        treefile1=open(treefname1,'rb')
+        try:
+            kdtree_snap1_periodic=pickle.load(treefile1)
+            treefile1.close()
+            gen1=False
+        except:
+            logging.info(f'Could not load snap 1 KD tree - generating [runtime = {time.time()-t0:.2f}s]')
+            treefile1.close()
+            gen1=True
+            pass
+    else:
+        gen1=True
+
+    if gen1:
+        logging.info(f'Generating KDTree for snap 1 [runtime = {time.time()-t0:.2f}s]')
+        kdtree_snap1_periodic= cKDTree(np.column_stack([particledata_snap[f'Coordinates_{x}'] for x in 'xyz']),boxsize=boxsize)
+        treefile1=open(treefname1,'wb')
+        pickle.dump(kdtree_snap1_periodic,treefile1)
+        treefile1.close()
+
+    
+    #load catalogues into dataframes
+    catalogue_subhalo=pd.read_hdf('catalogues/catalogue_subhalo.hdf5',key='Subhalo')
+    catalogue_subhalo=catalogue_subhalo.loc[catalogue_subhalo['snapshotidx']==snapidx,:]
+
+    #select relevant subhaloes
+    snap_mask=catalogue_subhalo[f'snapshotidx']==snapidx
+    snap_mass_mask=catalogue_subhalo[f'ApertureMeasurements/Mass/030kpc_4']>=10**mcut/10**10
+    snap_com_mask_1=np.logical_and.reduce([catalogue_subhalo[f'CentreOfPotential_{x}']>=ixmin for x,ixmin in zip('xyz',[xmin,ymin,zmin])])
+    snap_com_mask_2=np.logical_and.reduce([catalogue_subhalo[f'CentreOfPotential_{x}']<=ixmax for x,ixmax in zip('xyz',[xmax,ymax,zmax])])
+    snap_com_mask=np.logical_and.reduce([snap_com_mask_1,snap_com_mask_2,snap_mask,snap_mass_mask])
+    numgal_subvolume=np.sum(snap_com_mask);numgal_total=np.sum(np.logical_and(snap_mask,snap_mass_mask))
+    logging.info(f'Using {numgal_subvolume} of {numgal_total} valid galaxies from box [runtime = {time.time()-t0:.2f}s]')
+
+    #initialise output
+    initfields=['nodeIndex','GroupNumber','SubGroupNumber']
+    output_df=catalogue_subhalo.loc[snap_com_mask,initfields]
+    output_df.loc[:,'BaryMP-radius']=np.nan
+
+
+    for iigalaxy,(igalaxy,galaxy) in enumerate(catalogue_subhalo.loc[snap_com_mask,:].iterrows()):
+        
+        nodeidx=galaxy['nodeIndex']
+        subgroupnumber=galaxy['SubGroupNumber']
+
+        if subgroupnumber==0:
+            icen=True
+        else:
+            icen=False
+
+        com=[galaxy[f"CentreOfPotential_{x}"] for x in 'xyz']
+        vcom=[galaxy_snap2[f"Velocity_{x}"] for x in 'xyz']
+
+        #select particles in halo-size sphere
+        if icen:
+            r200=galaxy['Group_R_Crit200']
+        else:
+            r200=r200(m200=galaxy['Mass']*10**10,rhocrit=(cosmology.critical_density(redshift)).to(units.Msun/u.Mpc).value)
+
+        print(icen,mass,r200)
+
 
 def analyse_gasflow(path,mcut,snapidx,nvol,ivol,snapidx_delta=1):
 
@@ -834,6 +978,9 @@ def combine_catalogues(mcut,snapidxs=[],nvol,snapidx_deltas=[1]):
     catalogue_subhalo.to_hdf(outname,key='Subhalo')
 
 
+
+
+
 #lower level
 
 def ivol_gen(ix,iy,iz,nvol):
@@ -849,13 +996,17 @@ def ivol_idx(ivol,nvol):
     iy=int((ivol-ix*nvol**2-iz)/nvol)
     return (ix,iy,iz)
 
-def tfloor(nh,norm=17235.4775202):
+def tfloor_eagle(nh,norm=17235.4775202):
     T=np.zeros(np.shape(nh))+8000
     dense=np.where(nh>=10**-1)
     T[dense]=norm*nh[dense]**(1/3)
 
     return T
 
+def r200(m200,rhocrit):
+    r200_cubed=3*m200/(800*np.pi*rhocrit)
+    return r200_cubed**(1/3)
+    
 def find_progidx(catalogue_subhalo,nodeidx,snapidx_delta):
     nodeidx_depth=nodeidx
     nodeidx_depths=[nodeidx]
@@ -901,7 +1052,6 @@ def BaryMP(x,y,eps=0.01,grad=1):
 	Nfit = len(x2fit) # Number of points on the profile fitted to in the end
 
 	return r_bmp, Nfit
-
 
 
 
