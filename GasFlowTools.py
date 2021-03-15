@@ -912,7 +912,7 @@ def analyse_gasflow(path,mcut,snapidx,nvol,ivol,snapidx_delta=1):
     gasflow_df.to_hdf(output_fname,key='Flux')
     print(gasflow_df)
 
-def combine_catalogues(mcut,snapidxs=[],nvol,snapidx_deltas=[1]):
+def combine_catalogues(mcut,snapidxs,nvol,snapidx_deltas=[1]):
     outname=f'catalogues/catalogue_gasflow_nvol_{str(nvol).zfill(2)}_mcut_{str(mcut).zfill(2)}.hdf5'
     catalogue_subhalo=pd.read_hdf('catalogues/catalogue_subhalo.hdf5',key='Subhalo')
     catalogue_subhalo=catalogue_subhalo.loc[np.logical_and(np.logical_or.reduce([catalogue_subhalo['snapshotidx']==snapidx for snapidx in snapidxs]),catalogue_subhalo['ApertureMeasurements/Mass/030kpc_4']>=10**mcut/10**10),:]
