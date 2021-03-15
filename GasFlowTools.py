@@ -429,6 +429,7 @@ def analyse_subhalo(path,mcut,snapidx,nvol,ivol):
     ivol=str(ivol).zfill(3)
     ix,iy,iz=ivol_idx(ivol,nvol=nvol)
 
+
     t0=time.time()
     logfile=f'logs/subhalo/subhalo_snapidx_{snapidx}_n_{str(nvol).zfill(2)}_volume_{ivol}.log'
     if os.path.exists(logfile):
@@ -545,7 +546,6 @@ def analyse_subhalo(path,mcut,snapidx,nvol,ivol):
     output_df=catalogue_subhalo.loc[snap_com_mask,initfields]
     output_df.loc[:,'BaryMP-radius']=np.nan
 
-
     for iigalaxy,(igalaxy,galaxy) in enumerate(catalogue_subhalo.loc[snap_com_mask,:].iterrows()):
         
         nodeidx=galaxy['nodeIndex']
@@ -574,8 +574,26 @@ def analyse_subhalo(path,mcut,snapidx,nvol,ivol):
         part_data_candidates=particledata_snap.loc[part_idx_candidates,:]
         part_data_candidates.loc[:,"rrel_com"]=np.sqrt(np.sum(np.square(np.column_stack([part_data_candidates[f'Coordinates_{x}']-com[ix] for ix,x in enumerate('xyz')])),axis=1))/r200_eff #Mpc
 
-
+        totbaryonmass=np.nansum(part_data_candidates.loc[:,"Mass"])
         
+        #fit baryon mass profile
+        r200_bins=np.linspace(0,1,n=26)
+        r200_bins_mid=np.linspace(0.02,0.98,n=25)
+        masks=[np.logical_and(part_data_candidates["rrel_com"]>bin_lo,part_data_candidates["rrel_com"]<bin_hi) for bin_lo, bin_hi in zip(r200_bins[:-1],r200_bins[1:])]
+        mass_binned=[np.nansum(part_data_candidates.loc[mask,"Mass"]) for mask in masks]
+        mass_binned_cumulative=np.cumsum(mass_binned)/totbaryonmass
+        print(mass_binned_cumulative)
+
+
+        # """
+        # Find the radius for a galaxy from the BaryMP method
+        # x = r/r_200
+        # y = cumulative baryonic mass profile
+        # eps = epsilon, if data 
+        # """
+
+
+
         print(part_data_candidates.loc[:,"rrel_com"])
         # print(icen,f"{galaxy['Mass']*10**10:.1e}",f" | eff radius: {r200_eff*1000:.2f} kpc | host radius {r200_host*1000:.2f} kpc |")
 
