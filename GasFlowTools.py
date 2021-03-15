@@ -894,7 +894,7 @@ def analyse_gasflow(path,mcut,snapidx,nvol,ivol,snapidx_delta=1,detailed=True,du
             folder=f'catalogues/galaxies/snap_{snapidx2}/group_{groupnumber}/subgroup_{subgroupnumber}'
             runningfolder=''
             for ifolder in folder.split('/'):
-                runningfolder+=f'/{ifolder}'
+                runningfolder+=f'{ifolder}/'
                 if not os.path.exists(runningfolder):
                     os.mkdir(runningfolder)
 
