@@ -779,7 +779,7 @@ def analyse_gasflow(path,mcut,snapidx,nvol,ivol,snapidx_delta=1,detailed=True):
 
     if detailed:
         catalogue_subhalo_extended_ivol_fname=f'catalogues/subhalo/subhalo_snapidx_{snapidx2}_n_{str(nvol).zfill(2)}_volume_{str(ivol).zfill(3)}.hdf5'
-        catalogue_subhalo_extended_ivol=pd.read_hdf(catalogue_subhalo_extended_ivol_fname,key='Flux')
+        catalogue_subhalo_extended_ivol=pd.read_hdf(catalogue_subhalo_extended_ivol_fname,key='Subhalo')
         detailed_fields=list(catalogue_subhalo_extended_ivol)
 
     #select relevant subhaloes
@@ -795,15 +795,23 @@ def analyse_gasflow(path,mcut,snapidx,nvol,ivol,snapidx_delta=1,detailed=True):
     initfields=['nodeIndex','GroupNumber','SubGroupNumber']
     gasflow_df=catalogue_subhalo.loc[snap2_com_mask,initfields]
 
-    gasflow_df.loc[:,'Inflow-ISM_HMS']=np.nan
-    gasflow_df.loc[:,'Inflow-ISM_30kpc']=np.nan
-    gasflow_df.loc[:,'Outflow-ISM_HMS']=np.nan
-    gasflow_df.loc[:,'Outflow-ISM_30kpc']=np.nan
+    gasflow_df.loc[:,'inflow-sph_30kpc']=np.nan
+    gasflow_df.loc[:,'inflow-ism_30kpc']=np.nan
+    gasflow_df.loc[:,'outflow-sph_30kpc']=np.nan
+    gasflow_df.loc[:,'outflow-ism_30kpc']=np.nan
 
-    r200_facs=[0.125,0.25,0.5,0.75,1]
+    if detailed:
+        gasflow_df.loc[:,'inflow-sph_barymp']=np.nan
+        gasflow_df.loc[:,'inflow-ism_barymp']=np.nan
+        gasflow_df.loc[:,'outflow-sph_barymp']=np.nan
+        gasflow_df.loc[:,'outflow-ism_barymp']=np.nan
+        gasflow_df.loc[:,detailed_fields]=np.nan
+
+
+    r200_facs=[0.1,0.15,0.2,0.25,0.5,0.75,1]
     for fac in r200_facs:
-        gasflow_df.loc[:,f'Inflow-{fac:.3f}R200']=np.nan
-        gasflow_df.loc[:,f'Outflow-{fac:.3f}R200']=np.nan
+        gasflow_df.loc[:,f'inflow-{fac:.3f}r200']=np.nan
+        gasflow_df.loc[:,f'outflow-{fac:.3f}r200']=np.nan
 
     success=[]
     #Main halo loop
@@ -827,6 +835,8 @@ def analyse_gasflow(path,mcut,snapidx,nvol,ivol,snapidx_delta=1,detailed=True):
             continue
 
         galaxy_snap1=catalogue_subhalo.loc[progidx==catalogue_subhalo['nodeIndex'],:]
+        subgroupnumber_snap1=galaxy_snap1[f"SubGroupNumber"].values[0]
+
         com_snap2=[galaxy_snap2[f"CentreOfPotential_{x}"] for x in 'xyz']
         com_snap1=[galaxy_snap1[f"CentreOfPotential_{x}"].values[0] for x in 'xyz']
 
@@ -835,7 +845,6 @@ def analyse_gasflow(path,mcut,snapidx,nvol,ivol,snapidx_delta=1,detailed=True):
 
         if detailed:    
             galaxy_snap2_detailed=catalogue_subhalo_extended_ivol.loc[igalaxy_snap2,detailed_fields]
-            print(galaxy_snap2_detailed)
 
         #select particles in halo-size sphere
         hostradius=(np.float(galaxy_snap2['Group_R_Crit200'])+np.float(galaxy_snap1['Group_R_Crit200']))/2
@@ -877,9 +886,25 @@ def analyse_gasflow(path,mcut,snapidx,nvol,ivol,snapidx_delta=1,detailed=True):
         
         #masks snap 1
         gas_snap1=part_data_candidates_snap1["ParticleTypes"].values==0
+        subgroup_snap1=part_data_candidates_snap1["SubGroupNumber"].values==subgroupnumber_snap1
+        tempreq_snap1=part_data_candidates_snap1["Temperature"].values<=tfloor_eagle(part_data_candidates_snap1["Density"].values*nh_conversion)*10**0.5
+        inside_30kpc_snap1=part_data_candidates_snap1.loc[:,"r_com"]<0.03
+
+        if detailed:
+            insidebarymp_snap1=part_data_candidates_snap1.loc[:,"r_com"]<galaxy_snap2_detailed['BaryMP-radius']
 
         #masks snap 2
-        subgroup_snap2=part_data_candidates_snap1["SubGroupNumber"].values==subgroupnumber
+        subgroup_snap2=part_data_candidates_snap2["SubGroupNumber"].values==subgroupnumber
+        tempreq_snap2=part_data_candidates_snap2["Temperature"].values<=tfloor_eagle(part_data_candidates_snap2["Density"].values*nh_conversion)*10**0.5
+        inside_30kpc_snap2=part_data_candidates_snap2.loc[:,"r_com"]<0.03
+
+        if detailed:
+            insidebarymp_snap2=part_data_candidates_snap2.loc[:,"r_com"]<galaxy_snap2_detailed['BaryMP-radius']
+
+
+       
+
+        
 
         #sfr criterion
         # part_data_candidates_snap1["starforming-ism-hms"]=np.logical_and.reduce([part_data_candidates_snap1["Density"].values*nh_conversion>=0.1*(part_data_candidates_snap1["Metallicity"].values)**(-0.64),
