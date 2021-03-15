@@ -560,15 +560,10 @@ def analyse_subhalo(path,mcut,snapidx,nvol,ivol):
         vcom=[galaxy[f"Velocity_{x}"] for x in 'xyz']
 
         #select particles in halo-size sphere
-        if icen:
-            r200_eff=galaxy['Group_R_Crit200']
-        else:
-            rhocrit=cosmology.critical_density(redshift)
-            rhocrit=rhocrit.to(units.Msun/units.Mpc**3)
-            rhocrit=rhocrit.value
-            r200_eff=r200(m200=galaxy['Mass']*10**10,rhocrit=rhocrit)
+        r200_host=galaxy['Group_R_Crit200']
+        r200_eff=r200(m200=galaxy['Mass']*10**10,rhocrit=rhocrit)
 
-        print(icen,galaxy['Mass']*10**10,r200_eff)
+        print(icen,f"{galaxy['Mass']*10**10:.1e}",f" | eff radius: {r200_eff*1000:.2f} kpc | host radius {r200_host*1000:.2f} kpc |")
 
 
 def analyse_gasflow(path,mcut,snapidx,nvol,ivol,snapidx_delta=1):
