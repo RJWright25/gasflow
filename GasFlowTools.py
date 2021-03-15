@@ -577,7 +577,7 @@ def analyse_subhalo(path,mcut,snapidx,nvol,ivol):
         totbaryonmass=np.nansum(part_data_candidates.loc[:,"Mass"])
         
         #fit baryon mass profile
-        r200_bins=np.linspace(0,1,26)
+        r200_bins=10**np.linspace(-2,0,26)
         r200_bins_mid=r200_bins[1:]
         masks=[np.logical_and(part_data_candidates["rrel_com"]>bin_lo,part_data_candidates["rrel_com"]<bin_hi) for bin_lo, bin_hi in zip(r200_bins[:-1],r200_bins[1:])]
         mass_binned=[np.nansum(part_data_candidates.loc[mask,"Mass"]) for mask in masks]
@@ -591,10 +591,6 @@ def analyse_subhalo(path,mcut,snapidx,nvol,ivol):
         # y = cumulative baryonic mass profile
         # eps = epsilon, if data 
         # """
-
-
-
-        print(part_data_candidates.loc[:,"rrel_com"])
         # print(icen,f"{galaxy['Mass']*10**10:.1e}",f" | eff radius: {r200_eff*1000:.2f} kpc | host radius {r200_host*1000:.2f} kpc |")
 
 
