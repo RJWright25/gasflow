@@ -577,7 +577,6 @@ def analyse_subhalo(path,mcut,snapidx,nvol,ivol):
         part_data_candidates=particledata_snap.loc[part_idx_candidates,:]
         part_data_candidates.loc[:,"rrel_com"]=np.sqrt(np.sum(np.square(np.column_stack([part_data_candidates[f'Coordinates_{x}']-com[ix] for ix,x in enumerate('xyz')])),axis=1))/r200_eff #Mpc
 
-
         totbaryonmass=np.nansum(part_data_candidates.loc[:,"Mass"])
         
         #fit baryon mass profile
@@ -589,7 +588,7 @@ def analyse_subhalo(path,mcut,snapidx,nvol,ivol):
         try:
             barymp,nfit=BaryMP(r200_bins_mid,mass_binned_cumulative)
         except:
-            print('Could not fit baryon radius')
+            print(f"Could not fit baryon radius: Msub={galaxy['Mass']*10**10:.1e} Msun")
             continue
 
 
