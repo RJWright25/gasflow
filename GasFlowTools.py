@@ -561,6 +561,10 @@ def analyse_subhalo(path,mcut,snapidx,nvol,ivol):
 
         #select particles in halo-size sphere
         r200_host=galaxy['Group_R_Crit200']
+
+        rhocrit=cosmology.critical_density(redshift)
+        rhocrit=rhocrit.to(units.Msun/units.Mpc**3)
+        rhocrit=rhocrit.value
         r200_eff=r200(m200=galaxy['Mass']*10**10,rhocrit=rhocrit)
 
         print(icen,f"{galaxy['Mass']*10**10:.1e}",f" | eff radius: {r200_eff*1000:.2f} kpc | host radius {r200_host*1000:.2f} kpc |")
