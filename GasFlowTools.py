@@ -494,10 +494,9 @@ def analyse_subhalo(path,mcut,snapidx,nvol,ivol):
 
     logging.info(f'Done reading datasets - concatenating gas and star data [runtime = {time.time()-t0:.2f}s]')
     particledata_snap=particledata_snap.append(particledata_snap_star,ignore_index=True)
-    particledata_snap.reset_index(inplace=True,drop=True)
 
-    npart_ivol=particledata_snap.shape[0]
-
+    logging.info(f'Sorting by IDs [runtime = {time.time()-t0:.2f}s]')
+    particledata_snap.sort_values(by="ParticleIDs",inplace=True);particledata_snap.reset_index(inplace=True,drop=True)
     size1=np.sum(particledata_snap.memory_usage().values)/10**9
     
     logging.info(f'Particle data snap 1 memory usage: {size1:.2f} GB')
@@ -549,7 +548,6 @@ def analyse_subhalo(path,mcut,snapidx,nvol,ivol):
 
     for iigalaxy,(igalaxy,galaxy) in enumerate(catalogue_subhalo.loc[snap_com_mask,:].iterrows()):
         
-        partselect_mask=np.zeros(npart_ivol)
         nodeidx=galaxy['nodeIndex']
         subgroupnumber=galaxy['SubGroupNumber']
 
@@ -563,19 +561,21 @@ def analyse_subhalo(path,mcut,snapidx,nvol,ivol):
 
         #select particles in halo-size sphere
         # r200_host=galaxy['Group_R_Crit200']
+
         rhocrit=cosmology.critical_density(redshift)
         rhocrit=rhocrit.to(units.Msun/units.Mpc**3)
         rhocrit=rhocrit.value
         r200_eff=r200(m200=galaxy['Mass']*10**10,rhocrit=rhocrit)
+        
+        part_idx_within_radius=kdtree_snap1_periodic.query_ball_point(com,r200_eff)
+        part_IDs_within_radius=(particledata_snap.loc[part_idx_within_radius,"ParticleIDs"].values).astype(np.int64)
 
-        part_idxs_within_radius=kdtree_snap1_periodic.query_ball_point(com,r200_eff)
-        for part_idx_within_radius in part_idxs_within_radius:
-            partselect_mask[part_idx_within_radius]=1
+        part_idx_candidates=particledata_snap['ParticleIDs'].searchsorted(part_IDs_within_radius)
+        part_data_candidates=particledata_snap.loc[part_idx_candidates,:]
+        
+        part_data_candidates.loc[:,"r_com"]=np.sqrt(np.sum(np.square(np.column_stack([part_data_candidates[f'Coordinates_{x}']-com[ix] for ix,x in enumerate('xyz')])),axis=1))#Mpc
 
-        partdata_selected=particledata_snap.loc[partselect_mask,:]
-        partdata_selected.loc[:,"r_com"]=np.sqrt(np.sum(np.square(np.column_stack([partdata_selected[f'Coordinates_{x}']-com[ix] for ix,x in enumerate('xyz')])),axis=1))#Mpc
-
-        print(partdata_selected.loc[:,"r_com"])
+        print(part_data_candidates.loc[:,"r_com"])
 
         # print(icen,f"{galaxy['Mass']*10**10:.1e}",f" | eff radius: {r200_eff*1000:.2f} kpc | host radius {r200_host*1000:.2f} kpc |")
 
@@ -766,6 +766,7 @@ def analyse_gasflow(path,mcut,snapidx,nvol,ivol,snapidx_delta=1):
         nodeidx=galaxy_snap2['nodeIndex']
         subgroupnumber=galaxy_snap2['SubGroupNumber']
         progidx=find_progidx(catalogue_subhalo,nodeidx=nodeidx,snapidx_delta=snapidx_delta)
+        print(progidx)
 
         if subgroupnumber==0:
             icen=True
