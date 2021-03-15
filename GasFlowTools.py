@@ -551,6 +551,7 @@ def analyse_subhalo(path,mcut,snapidx,nvol,ivol):
     output_df.loc[:,'BaryMP-factor']=np.nan
     output_df.loc[:,'BaryMP-mstar']=np.nan
 
+    success=[]
     for iigalaxy,(igalaxy,galaxy) in enumerate(catalogue_subhalo.loc[snap_com_mask,:].iterrows()):
         
         nodeidx=galaxy['nodeIndex']
@@ -589,23 +590,30 @@ def analyse_subhalo(path,mcut,snapidx,nvol,ivol):
             barymp,nfit=BaryMP(r200_bins_mid,mass_binned_cumulative)
         except:
             print(f"Could not fit baryon radius: Msub={galaxy['Mass']*10**10:.1e} Msun")
+            success.append(0)
             continue
 
-
-        if icen:
-            print('central')
-        else:
-            print('satellite')
-        print(f'barymp = {barymp:.3f}R200 = {barymp*r200_eff*1000:.1f} kpc (nfit = {nfit})')
 
         barymp_rad=barymp*r200_eff
         barymp_mstar=np.nansum(part_data_candidates.loc[np.logical_and(part_data_candidates.loc[:,"rrel_com"]<barymp,part_data_candidates.loc[:,"ParticleTypes"]==4),"Mass"])
 
-        output_df.loc[:,'BaryMP-radius']=barymp_rad
-        output_df.loc[:,'BaryMP-factor']=barymp
-        output_df.loc[:,'BaryMP-mstar']=barymp_mstar
+        output_df.loc[igalaxy,'BaryMP-radius']=barymp_rad
+        output_df.loc[igalaxy,'BaryMP-factor']=barymp
+        output_df.loc[igalaxy,'BaryMP-mstar']=barymp_mstar
+        
+        if icen:
+            logging.info(f'Done with galaxy {iigalaxy+1} of {numgal_subvolume} for this subvolume - CENTRAL [runtime = {time.time()-t0:.2f}s]')
+        else:
+            logging.info(f'Done with galaxy {iigalaxy+1} of {numgal_subvolume} for this subvolume - SATELLITE [runtime = {time.time()-t0:.2f}s]')
 
-    
+        logging.info(f'')
+        success.append(1)
+
+    logging.info(f'{np.sum(success):.0f} of {len(success):.0f} galaxies were successfully processed ({np.nanmean(success)*100:.1f}%) [runtime = {time.time()-t0:.2f}s]')
+
+    output_df.to_hdf(output_fname,key='Flux')
+    print(output_df)
+
 
 def analyse_gasflow(path,mcut,snapidx,nvol,ivol,snapidx_delta=1):
 
