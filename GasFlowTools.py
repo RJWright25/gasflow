@@ -557,7 +557,7 @@ def analyse_subhalo(path,mcut,snapidx,nvol,ivol):
             icen=False
 
         com=[galaxy[f"CentreOfPotential_{x}"] for x in 'xyz']
-        vcom=[galaxy_snap2[f"Velocity_{x}"] for x in 'xyz']
+        vcom=[galaxy[f"Velocity_{x}"] for x in 'xyz']
 
         #select particles in halo-size sphere
         if icen:
