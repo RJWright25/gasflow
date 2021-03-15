@@ -988,8 +988,7 @@ def analyse_gasflow(path,mcut,snapidx,nvol,ivol,snapidx_delta=1,detailed=True,du
     logging.info(f'{np.sum(success):.0f} of {len(success):.0f} galaxies were successfully processed ({np.nanmean(success)*100:.1f}%) [runtime = {time.time()-t0:.2f}s]')
 
     gasflow_df.to_hdf(output_fname,key='Flux')
-    print(gasflow_df)
-    print(gasflow_df.shape)
+    print(gasflow_df[:,['BaryMP-radius','inflow-ism_barymp','outflow-ism_barymp','inflow-sph_barymp','outflow-sph_barymp']])
 
 def combine_catalogues(mcut,snapidxs,nvol,snapidx_delta=1):
     
