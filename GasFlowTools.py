@@ -798,6 +798,7 @@ def analyse_gasflow(path,mcut,snapidx,nvol,ivol,snapidx_delta=1,detailed=True,du
     #initialise output
     initfields=['nodeIndex','GroupNumber','SubGroupNumber']
     gasflow_df=catalogue_subhalo.loc[snap2_com_mask,initfields]
+    print(gasflow_df)
 
     gasflow_df.loc[:,'inflow-sph_30kpc']=np.nan
     gasflow_df.loc[:,'inflow-ism_30kpc']=np.nan
