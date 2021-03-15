@@ -441,7 +441,7 @@ def analyse_subhalo(path,mcut,snapidx,nvol,ivol):
 
     redshift_table=pd.read_hdf('snapshot_redshifts.hdf5',key='snapshots')
 
-    snapidx_tag=redshift_table.loc[redshift_table['snapshotidx']==snapidx,'tag']
+    snapidx_tag=str(redshift_table.loc[redshift_table['snapshotidx']==snapidx,'tag'])
     snapidx_particledatapath=f'{path}/particledata_{snapidx_tag}/eagle_subfind_snip_particles_{snapidx_tag[5:]}.0.hdf5'
     
     #read data
