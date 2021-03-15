@@ -578,12 +578,12 @@ def analyse_subhalo(path,mcut,snapidx,nvol,ivol):
         part_data_candidates=particledata_snap.loc[part_idx_candidates,:]
         part_data_candidates.loc[:,"rrel_com"]=np.sqrt(np.sum(np.square(np.column_stack([part_data_candidates[f'Coordinates_{x}']-com[ix] for ix,x in enumerate('xyz')])),axis=1))/r200_eff #Mpc
 
-        totbaryonmass=np.nansum(part_data_candidates.loc[:,"Mass"])
+        totbaryonmass=np.nansum(part_data_candidates.loc[part_data_candidates["SubGroupNumber"]==subgroupnumber,"Mass"])
         
         #fit baryon mass profile
         r200_bins=np.linspace(0,1,200)
         r200_bins_mid=r200_bins[1:]
-        masks=[np.logical_and(part_data_candidates["rrel_com"]>bin_lo,part_data_candidates["rrel_com"]<bin_hi) for bin_lo, bin_hi in zip(r200_bins[:-1],r200_bins[1:])]
+        masks=[np.logical_and.reduce([part_data_candidates["rrel_com"]>bin_lo,part_data_candidates["rrel_com"]<bin_hi,part_data_candidates["SubGroupNumber"]==subgroupnumber]) for bin_lo, bin_hi in zip(r200_bins[:-1],r200_bins[1:])]
         mass_binned=[np.nansum(part_data_candidates.loc[mask,"Mass"]) for mask in masks]
         mass_binned_cumulative=np.cumsum(mass_binned)/totbaryonmass
         try:
