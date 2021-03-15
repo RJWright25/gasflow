@@ -585,8 +585,8 @@ def analyse_subhalo(path,mcut,snapidx,nvol,ivol):
         mass_binned=[np.nansum(part_data_candidates.loc[mask,"Mass"]) for mask in masks]
         mass_binned_cumulative=np.cumsum(mass_binned)/totbaryonmass
 
-        barymp=BaryMP(r200_bins_mid,mass_binned_cumulative)
-        print(f'barymp = {barymp:.3f}R200 = {barymp*r200_eff*1000:.1f} kpc')
+        barymp,nfit=BaryMP(r200_bins_mid,mass_binned_cumulative)
+        print(f'barymp = {barymp:.3f}R200 = {barymp*r200_eff*1000:.1f} kpc (nfit = {nfit})')
 
 
 
