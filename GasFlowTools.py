@@ -565,7 +565,7 @@ def analyse_subhalo(path,mcut,snapidx,nvol,ivol):
         else:
             r200=r200(m200=galaxy['Mass']*10**10,rhocrit=(cosmology.critical_density(redshift)).to(units.Msun/u.Mpc).value)
 
-        print(icen,mass,r200)
+        print(icen,galaxy['Mass']*10**10,r200)
 
 
 def analyse_gasflow(path,mcut,snapidx,nvol,ivol,snapidx_delta=1):
