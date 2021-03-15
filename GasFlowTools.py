@@ -785,6 +785,7 @@ def analyse_gasflow(path,mcut,snapidx,nvol,ivol,snapidx_delta=1,detailed=True,du
             catalogue_subhalo_extended_ivol=pd.read_hdf(catalogue_subhalo_extended_ivol_fname,key='Flux')
 
         detailed_fields=list(catalogue_subhalo_extended_ivol)
+        detailed_fields.remove('nodeIndex');detailed_fields.remove('GroupNumber');detailed_fields.remove('SubGroupNumber')
 
     #select relevant subhaloes
     snap2_mask=catalogue_subhalo[f'snapshotidx']==snapidx2
@@ -853,6 +854,7 @@ def analyse_gasflow(path,mcut,snapidx,nvol,ivol,snapidx_delta=1,detailed=True,du
 
         if detailed:    
             galaxy_snap2_detailed=catalogue_subhalo_extended_ivol.loc[igalaxy_snap2,detailed_fields]
+            print(galaxy_snap2_detailed)
 
         #select particles in halo-size sphere
         hostradius=(np.float(galaxy_snap2['Group_R_Crit200'])+np.float(galaxy_snap1['Group_R_Crit200']))/2
@@ -959,6 +961,7 @@ def analyse_gasflow(path,mcut,snapidx,nvol,ivol,snapidx_delta=1,detailed=True,du
             gasflow_df.loc[igalaxy_snap2,'outflow-ism_barymp']=np.sum(part_data_candidates_snap2.loc[ism_partidx_out_barymp,'Mass'])
             gasflow_df.loc[igalaxy_snap2,'inflow-sph_barymp']=np.sum(part_data_candidates_snap2.loc[sph_partidx_in_barymp,'Mass'])
             gasflow_df.loc[igalaxy_snap2,'outflow-sph_barymp']=np.sum(part_data_candidates_snap2.loc[sph_partidx_out_barymp,'Mass'])
+            gasflow_df.loc[igalaxy_snap2,detailed_fields]=np.array([galaxy_snap2_detailed[detailed_field].values[0] for detailed_field in detailed_fields])
 
         #halo def
         for fac in r200_facs:
