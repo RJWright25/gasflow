@@ -889,7 +889,7 @@ def analyse_gasflow(path,mcut,snapidx,nvol,ivol,snapidx_delta=1,detailed=True,du
         if dump and galaxy_snap2[f'ApertureMeasurements/Mass/030kpc_4']*10**10>10**10:
             folder=f'catalogues/galaxies/snap_{snap}/group_{groupnumber}/subgroup_{subgroupnumber}'
             runningfolder=''
-            for ifolder in folder.split('/')
+            for ifolder in folder.split('/'):
                 runningfolder+=f'/{ifolder}'
                 if not os.path.exists(runningfolder):
                     os.mkdir(runningfolder)
