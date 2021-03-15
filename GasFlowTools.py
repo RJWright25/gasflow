@@ -580,6 +580,7 @@ def analyse_subhalo(path,mcut,snapidx,nvol,ivol):
         
         #fit baryon mass profile
         ncomp=int(np.floor(npart_galaxy/20))
+        print(ncomp)
         r200_bins=np.linspace(0,1,ncomp)
         r200_bins_mid=r200_bins[1:]
         masks=[np.logical_and(part_data_candidates["rrel_com"]>bin_lo,part_data_candidates["rrel_com"]<bin_hi) for bin_lo, bin_hi in zip(r200_bins[:-1],r200_bins[1:])]
