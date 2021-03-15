@@ -614,7 +614,7 @@ def analyse_subhalo(path,mcut,snapidx,nvol,ivol):
 
     logging.info(f'{np.sum(success):.0f} of {len(success):.0f} galaxies were successfully processed ({np.nanmean(success)*100:.1f}%) [runtime = {time.time()-t0:.2f}s]')
 
-    output_df.to_hdf(output_fname,key='Flux')
+    output_df.to_hdf(output_fname,key='Subhalo')
     print(output_df)
 
 def analyse_gasflow(path,mcut,snapidx,nvol,ivol,snapidx_delta=1,detailed=True):
@@ -779,7 +779,7 @@ def analyse_gasflow(path,mcut,snapidx,nvol,ivol,snapidx_delta=1,detailed=True):
 
     if detailed:
         catalogue_subhalo_extended_ivol_fname=f'catalogues/subhalo/subhalo_snapidx_{snapidx2}_n_{str(nvol).zfill(2)}_volume_{str(ivol).zfill(3)}.hdf5'
-        catalogue_subhalo_extended_ivol=pd.read_hdf(catalogue_subhalo_extended_ivol_fname,key='Subhalo')
+        catalogue_subhalo_extended_ivol=pd.read_hdf(catalogue_subhalo_extended_ivol_fname,key='Flux')
         detailed_fields=list(catalogue_subhalo_extended_ivol)
 
     #select relevant subhaloes
