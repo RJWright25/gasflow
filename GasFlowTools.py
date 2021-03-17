@@ -600,6 +600,9 @@ def analyse_subhalo(path,mcut,snapidx,nvol,ivol):
         output_df.loc[igalaxy,'BaryMP-radius']=barymp_rad
         output_df.loc[igalaxy,'BaryMP-factor']=barymp
         output_df.loc[igalaxy,'BaryMP-mstar']=barymp_mstar
+        output_df.loc[igalaxy,'BaryMP-nfit']=nfit
+
+        print(barymp,nfit,barymp_rad,barymp_mstar)
         
         if icen:
             logging.info(f'Done with galaxy {iigalaxy+1} of {numgal_subvolume} for this subvolume - CENTRAL [runtime = {time.time()-t0:.2f}s]')
