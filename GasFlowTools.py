@@ -553,6 +553,8 @@ def analyse_subhalo(path,mcut,snapidx,nvol,ivol):
     output_df.loc[:,'BaryMP-radius']=np.nan
     output_df.loc[:,'BaryMP-factor']=np.nan
     output_df.loc[:,'BaryMP-mstar']=np.nan
+    output_df.loc[:,'BaryMP-nfit']=np.nan
+    output_df.loc[:,'BaryMP-npart']=np.nan
 
     success=[]
     r200_bins=np.linspace(0,1,200)
@@ -591,44 +593,48 @@ def analyse_subhalo(path,mcut,snapidx,nvol,ivol):
 
         rrel=part_data_selection["rrel_com"].values
         mass=part_data_selection["Mass"].values
-
+        
         masks=[rrel<bin_hi for bin_lo, bin_hi in zip(r200_bins[:-1],r200_bins[1:])]
         mass_binned_cumulative=[np.nansum(mass[np.where(mask)]) for mask in masks]
         mass_binned_cumulative=mass_binned_cumulative/mass_binned_cumulative[-1]
 
-        try:
-            barymp,nfit=BaryMP(r200_bins_mid,mass_binned_cumulative)
-            nfit=nfit
-        except:
+        npart=len(rrel)
+        if npart>20:
             try:
-                barymp,nfit=BaryMP(r200_bins_mid[::-1],mass_binned_cumulative[::-1])
-                nfit=-nfit
+                barymp,nfit=BaryMP(r200_bins_mid,mass_binned_cumulative)
+                nfit=nfit
             except:
-                success.append(0)
                 barymp,nfit=np.nan,0
-                continue
-        
-        if barymp>0.8:
+        else:
+            barymp,nfit=np.nan,0
+            
+        if barymp>0.5:
             oldbarymp=barymp
             try:
                 barymp,nfit=BaryMP(r200_bins_mid[::-1],mass_binned_cumulative[::-1])
                 nfit=-nfit
             except:
-                success.append(0)
                 barymp,nfit=np.nan,0
-                continue
+            
             if galaxy['ApertureMeasurements/Mass/030kpc_4']*10**10>10**10:
                 print(f'Bad fit, old: {oldbarymp}, new: {barymp}')
                 print(f"Mstar_30={galaxy['ApertureMeasurements/Mass/030kpc_4']*10**10:.2e}, npart used = {len(rrel)}")
                 print(mass_binned_cumulative)
+        
+        if barymp==np.nan:
+            success.append(0)
+            barymp_mstar=np.nan
+        else:
+            success.append(1)
+            barymp_mstar=np.nansum(part_data_selection.loc[np.logical_and(rrel<barymp,part_data_selection.loc[:,"ParticleTypes"]==4),"Mass"])
 
         barymp_rad=barymp*r200_eff
-        barymp_mstar=np.nansum(part_data_selection.loc[np.logical_and(rrel<barymp,part_data_selection.loc[:,"ParticleTypes"]==4),"Mass"])
 
         output_df.loc[igalaxy,'BaryMP-radius']=barymp_rad
         output_df.loc[igalaxy,'BaryMP-factor']=barymp
         output_df.loc[igalaxy,'BaryMP-mstar']=barymp_mstar
         output_df.loc[igalaxy,'BaryMP-nfit']=nfit
+        output_df.loc[igalaxy,'BaryMP-npart']=npart
         
         if icen:
             logging.info(f'Done with galaxy {iigalaxy+1} of {numgal_subvolume} for this subvolume - CENTRAL [runtime = {time.time()-t0:.2f}s]')
@@ -636,7 +642,6 @@ def analyse_subhalo(path,mcut,snapidx,nvol,ivol):
             logging.info(f'Done with galaxy {iigalaxy+1} of {numgal_subvolume} for this subvolume - SATELLITE [runtime = {time.time()-t0:.2f}s]')
 
         logging.info(f'')
-        success.append(1)
 
     logging.info(f'{np.sum(success):.0f} of {len(success):.0f} galaxies were successfully processed ({np.nanmean(success)*100:.1f}%) [runtime = {time.time()-t0:.2f}s]')
 
