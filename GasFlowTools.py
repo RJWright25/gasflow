@@ -608,7 +608,7 @@ def analyse_subhalo(path,mcut,snapidx,nvol,ivol):
         else:
             barymp,nfit=np.nan,0
             
-        if barymp>0.5:
+        if barymp>0.5 or subgroupnumber>0:
             oldbarymp=barymp
             try:
                 barymp,nfit=BaryMP(r200_bins_mid[::-1],mass_binned_cumulative[::-1])
