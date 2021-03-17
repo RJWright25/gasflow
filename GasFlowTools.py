@@ -432,6 +432,8 @@ def analyse_subhalo(path,mcut,snapidx,nvol,ivol):
     ivol=str(ivol).zfill(3)
     ix,iy,iz=ivol_idx(ivol,nvol=nvol)
 
+    r200_bins=np.linspace(0,1,101)
+    r200_bins_mid=r200_bins[1:]
 
     t0=time.time()
     logfile=f'logs/subhalo/subhalo_snapidx_{snapidx}_n_{str(nvol).zfill(2)}_volume_{ivol}.log'
@@ -550,15 +552,15 @@ def analyse_subhalo(path,mcut,snapidx,nvol,ivol):
     #initialise output
     initfields=['nodeIndex','GroupNumber','SubGroupNumber']
     output_df=catalogue_subhalo.loc[snap_com_mask,initfields]
-    output_df.loc[:,'BaryMP-radius']=np.nan
-    output_df.loc[:,'BaryMP-factor']=np.nan
-    output_df.loc[:,'BaryMP-mstar']=np.nan
-    output_df.loc[:,'BaryMP-nfit']=np.nan
+    output_df.loc[:,'BaryMP-factor-pos']=np.nan
+    output_df.loc[:,'BaryMP-factor-neg']=np.nan
+    output_df.loc[:,'BaryMP-radius-pos']=np.nan
+    output_df.loc[:,'BaryMP-radius-neg']=np.nan
+    output_df.loc[:,'BaryMP-mstar-pos']=np.nan
+    output_df.loc[:,'BaryMP-mstar-neg']=np.nan
     output_df.loc[:,'BaryMP-npart']=np.nan
-
+    
     success=[]
-    r200_bins=np.linspace(0,1,200)
-    r200_bins_mid=r200_bins[1:]
     for iigalaxy,(igalaxy,galaxy) in enumerate(catalogue_subhalo.loc[snap_com_mask,:].iterrows()):
         
         nodeidx=galaxy['nodeIndex']
@@ -586,54 +588,42 @@ def analyse_subhalo(path,mcut,snapidx,nvol,ivol):
         part_data_candidates.loc[:,"rrel_com"]=np.sqrt(np.sum(np.square(np.column_stack([part_data_candidates[f'Coordinates_{x}']-com[ix] for ix,x in enumerate('xyz')])),axis=1))/r200_eff #Mpc
 
         #fit baryon mass profile
-        r200_bins=np.linspace(0,1,101)
-        r200_bins_mid=r200_bins[1:]
 
         part_data_selection=part_data_candidates.loc[np.logical_and(part_data_candidates["rrel_com"]<1,part_data_candidates["SubGroupNumber"]==0),:]
 
         rrel=part_data_selection["rrel_com"].values
         mass=part_data_selection["Mass"].values
-        
+        npart=len(rrel)
+
         masks=[rrel<bin_hi for bin_lo, bin_hi in zip(r200_bins[:-1],r200_bins[1:])]
         mass_binned_cumulative=[np.nansum(mass[np.where(mask)]) for mask in masks]
         mass_binned_cumulative=mass_binned_cumulative/mass_binned_cumulative[-1]
 
-        npart=len(rrel)
-        if npart>20:
+        if npart>50:
             try:
-                barymp,nfit=BaryMP(r200_bins_mid,mass_binned_cumulative)
-                nfit=nfit
+                barymp_pos,nfit_pos=BaryMP(r200_bins_mid,mass_binned_cumulative)
             except:
-                barymp,nfit=np.nan,0
-        else:
-            barymp,nfit=np.nan,0
-            
-        if barymp>0.5 or subgroupnumber>0:
-            oldbarymp=barymp
+                barymp_pos,nfit_pos=np.nan,0
             try:
-                barymp,nfit=BaryMP(r200_bins_mid[::-1],mass_binned_cumulative[::-1])
-                nfit=-nfit
+                barymp_neg,nfit_neg=BaryMP(r200_bins_mid[::-1],mass_binned_cumulative[::-1])
             except:
-                barymp,nfit=np.nan,0
-            
-            if galaxy['ApertureMeasurements/Mass/030kpc_4']*10**10>10**10:
-                print(f'Bad fit, old: {oldbarymp}, new: {barymp}')
-                print(f"Mstar_30={galaxy['ApertureMeasurements/Mass/030kpc_4']*10**10:.2e}, npart used = {len(rrel)}")
-                print(mass_binned_cumulative)
-        
-        if barymp==np.nan:
-            success.append(0)
-            barymp_mstar=np.nan
+                barymp_neg,nfit_neg=np.nan,0
+
+        if nfit_pos:
+            barymp_mstar_pos=np.nansum(part_data_selection.loc[np.logical_and(rrel<barymp_pos,part_data_selection.loc[:,"ParticleTypes"]==4),"Mass"])
         else:
-            success.append(1)
-            barymp_mstar=np.nansum(part_data_selection.loc[np.logical_and(rrel<barymp,part_data_selection.loc[:,"ParticleTypes"]==4),"Mass"])
+            barymp_mstar_pos=np.nan
+        if nfit_neg:
+            barymp_mstar_neg=np.nansum(part_data_selection.loc[np.logical_and(rrel<barymp_neg,part_data_selection.loc[:,"ParticleTypes"]==4),"Mass"])
+        else:
+            barymp_mstar_neg=np.nan
 
-        barymp_rad=barymp*r200_eff
-
-        output_df.loc[igalaxy,'BaryMP-radius']=barymp_rad
-        output_df.loc[igalaxy,'BaryMP-factor']=barymp
-        output_df.loc[igalaxy,'BaryMP-mstar']=barymp_mstar
-        output_df.loc[igalaxy,'BaryMP-nfit']=nfit
+        output_df.loc[igalaxy,'BaryMP-factor-pos']=barymp_pos
+        output_df.loc[igalaxy,'BaryMP-factor-neg']=barymp_neg
+        output_df.loc[igalaxy,'BaryMP-radius-pos']=barymp_pos*r200_eff
+        output_df.loc[igalaxy,'BaryMP-radius-neg']=barymp_neg*r200_eff
+        output_df.loc[igalaxy,'BaryMP-mstar-pos']=barymp_mstar_pos
+        output_df.loc[igalaxy,'BaryMP-mstar-neg']=barymp_mstar_neg
         output_df.loc[igalaxy,'BaryMP-npart']=npart
         
         if icen:
