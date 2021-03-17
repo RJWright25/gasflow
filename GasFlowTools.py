@@ -617,9 +617,11 @@ def analyse_subhalo(path,mcut,snapidx,nvol,ivol):
                 success.append(0)
                 barymp,nfit=np.nan,0
                 continue
-            print(f'Bad fit, old: {oldbarymp}, new: {barymp}')
-            print(mass_binned_cumulative)
-            
+            if galaxy['ApertureMeasurements/Mass/030kpc_4']*10**10>10**10:
+                print(f'Bad fit, old: {oldbarymp}, new: {barymp}')
+                print(f"Mstar_30={galaxy['ApertureMeasurements/Mass/030kpc_4']*10**10:.2e}, npart used = {len(rrel)}")
+                print(mass_binned_cumulative)
+
         barymp_rad=barymp*r200_eff
         barymp_mstar=np.nansum(part_data_selection.loc[np.logical_and(rrel<barymp,part_data_selection.loc[:,"ParticleTypes"]==4),"Mass"])
 
@@ -836,8 +838,6 @@ def analyse_gasflow(path,mcut,snapidx,nvol,ivol,snapidx_delta=1,detailed=True,du
         gasflow_df.loc[:,'outflow-ism_barymp']=np.nan
         gasflow_df.loc[:,detailed_fields]=np.nan
     
-    print(gasflow_df)
-    print(gasflow_df.shape)
 
 
     r200_facs=[0.1,0.15,0.2,0.25,0.5,0.75,1]
