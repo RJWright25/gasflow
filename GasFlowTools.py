@@ -933,7 +933,7 @@ def analyse_gasflow(path,mcut,snapidx,nvol,ivol,snapidx_delta=1,detailed=True,du
 
         if detailed:
             if galaxy_snap2_detailed['BaryMP-radius-pos']==np.nan and galaxy_snap2_detailed['BaryMP-radius-neg']==np.nan:
-                barymp_rad=np.nan:
+                barymp_rad=np.nan
             elif galaxy_snap2_detailed['BaryMP-radius-pos']==np.nan:
                 barymp_rad=galaxy_snap2_detailed['BaryMP-radius-neg']
             elif galaxy_snap2_detailed['BaryMP-radius-neg']==np.nan:
