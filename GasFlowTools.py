@@ -596,6 +596,7 @@ def analyse_subhalo(path,mcut,snapidx,nvol,ivol):
 
         try:
             barymp,nfit=BaryMP(r200_bins_mid[::-1],mass_binned_cumulative[::-1])
+            nfit=-nfit
         except:
             try:
                 barymp,nfit=BaryMP(r200_bins_mid,mass_binned_cumulative)
