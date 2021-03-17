@@ -598,11 +598,12 @@ def analyse_subhalo(path,mcut,snapidx,nvol,ivol):
         mass_binned_cumulative=mass_binned_cumulative/mass_binned_cumulative[-1]
 
         try:
-            barymp,nfit=BaryMP(r200_bins_mid[::-1],mass_binned_cumulative[::-1])
-            nfit=-nfit
+            barymp,nfit=BaryMP(r200_bins_mid,mass_binned_cumulative)
+            nfit=nfit
         except:
             try:
-                barymp,nfit=BaryMP(r200_bins_mid,mass_binned_cumulative)
+                barymp,nfit=BaryMP(r200_bins_mid[::-1],mass_binned_cumulative[::-1])
+                nfit=-nfit
             except:
                 print('Could not fit galaxy')
                 success.append(0)
