@@ -609,6 +609,7 @@ def analyse_subhalo(path,mcut,snapidx,nvol,ivol):
                 continue
         
         if barymp>0.8:
+            oldbarymp=barymp
             try:
                 barymp,nfit=BaryMP(r200_bins_mid[::-1],mass_binned_cumulative[::-1])
                 nfit=-nfit
@@ -616,6 +617,7 @@ def analyse_subhalo(path,mcut,snapidx,nvol,ivol):
                 success.append(0)
                 barymp,nfit=np.nan,0
                 continue
+            print(f'Bad fit, old: {oldbarymp}, new: {barymp}')
         
         barymp_rad=barymp*r200_eff
         barymp_mstar=np.nansum(part_data_selection.loc[np.logical_and(rrel<barymp,part_data_selection.loc[:,"ParticleTypes"]==4),"Mass"])
