@@ -602,7 +602,7 @@ def analyse_subhalo(path,mcut,snapidx,nvol,ivol):
             barymp,nfit=np.nan,0
         
         barymp_rad=barymp*r200_eff
-        barymp_mstar=np.nansum(part_data_candidates_sg.loc[np.logical_and(rrel<barymp,part_data_candidates_sg.loc[:,"ParticleTypes"]==4),"Mass"])
+        barymp_mstar=np.nansum(part_data_candidates.loc[np.logical_and(rrel<barymp,part_data_candidates.loc[:,"ParticleTypes"]==4),"Mass"])
 
         output_df.loc[igalaxy,'BaryMP-radius']=barymp_rad
         output_df.loc[igalaxy,'BaryMP-factor']=barymp
