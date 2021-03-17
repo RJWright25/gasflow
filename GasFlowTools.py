@@ -555,6 +555,8 @@ def analyse_subhalo(path,mcut,snapidx,nvol,ivol):
     output_df.loc[:,'BaryMP-mstar']=np.nan
 
     success=[]
+    r200_bins=np.linspace(0,1,200)
+    r200_bins_mid=r200_bins[1:]
     for iigalaxy,(igalaxy,galaxy) in enumerate(catalogue_subhalo.loc[snap_com_mask,:].iterrows()):
         
         nodeidx=galaxy['nodeIndex']
@@ -581,24 +583,19 @@ def analyse_subhalo(path,mcut,snapidx,nvol,ivol):
         part_data_candidates=particledata_snap.loc[part_idx_candidates,:]
         part_data_candidates.loc[:,"rrel_com"]=np.sqrt(np.sum(np.square(np.column_stack([part_data_candidates[f'Coordinates_{x}']-com[ix] for ix,x in enumerate('xyz')])),axis=1))/r200_eff #Mpc
 
-        totbaryonmass=np.nansum(part_data_candidates.loc[part_data_candidates["SubGroupNumber"]==subgroupnumber,"Mass"])
-        
         #fit baryon mass profile
-        r200_bins=np.linspace(0,1,200)
-        r200_bins_mid=r200_bins[1:]
-        masks=[np.logical_and.reduce([part_data_candidates["rrel_com"]>bin_lo,part_data_candidates["rrel_com"]<bin_hi,part_data_candidates["SubGroupNumber"]==subgroupnumber]) for bin_lo, bin_hi in zip(r200_bins[:-1],r200_bins[1:])]
-        mass_binned=[np.nansum(part_data_candidates.loc[mask,"Mass"]) for mask in masks]
-        mass_binned_cumulative=np.cumsum(mass_binned)/totbaryonmass
-        try:
-            barymp,nfit=BaryMP(r200_bins_mid,mass_binned_cumulative)
-        except:
-            print(f"Could not fit baryon radius: Msub={galaxy['Mass']*10**10:.1e} Msun")
-            success.append(0)
-            continue
+        part_data_candidates_sg=part_data_candidates.loc[part_data_candidates.loc[:,"SubGroupNumber"]==subgroupnumber,:]
+        rrel=part_data_candidates_sg["rrel_com"].values
+        mass=part_data_candidates_sg["Mass"].values
 
+        masks=[rrel<bin_hi for bin_lo, bin_hi in zip(r200_bins[:-1],r200_bins[1:])]
+        mass_binned_cumulative=[np.nansum(mass[np.where(mask)]) for mask in masks]
+        mass_binned_cumulative=mass_binned_cumulative/mass_binned_cumulative[-1]
+
+        barymp,nfit=BaryMP(r200_bins_mid[::-1],mass_binned_cumulative[::-1])
 
         barymp_rad=barymp*r200_eff
-        barymp_mstar=np.nansum(part_data_candidates.loc[np.logical_and(part_data_candidates.loc[:,"rrel_com"]<barymp,part_data_candidates.loc[:,"ParticleTypes"]==4),"Mass"])
+        barymp_mstar=np.nansum(part_data_candidates_sg.loc[np.logical_and(rrel<barymp,part_data_candidates_sg.loc[:,"ParticleTypes"]==4),"Mass"])
 
         output_df.loc[igalaxy,'BaryMP-radius']=barymp_rad
         output_df.loc[igalaxy,'BaryMP-factor']=barymp
