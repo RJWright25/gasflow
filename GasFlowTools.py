@@ -687,7 +687,6 @@ def analyse_gasflow(path,mcut,snapidx,nvol,ivol,snapidx_delta=1,detailed=True,du
     ymin=iy*subvol_edgelength;ymax=(iy+1)*subvol_edgelength
     zmin=iz*subvol_edgelength;zmax=(iz+1)*subvol_edgelength
 
-
     logging.info(f'Considering region: (1/{nvol**3} of full box) [runtime = {time.time()-t0:.2f}s]')
     logging.info(f'ix: {ix} - x in [{xmin},{xmax}]')
     logging.info(f'iy: {iy} - y in [{ymin},{ymax}]')
@@ -873,7 +872,6 @@ def analyse_gasflow(path,mcut,snapidx,nvol,ivol,snapidx_delta=1,detailed=True,du
 
         if detailed:    
             galaxy_snap2_detailed=catalogue_subhalo_extended_ivol.loc[igalaxy_snap2,detailed_fields]
-            print(galaxy_snap2_detailed)
 
         #select particles in halo-size sphere
         hostradius=(np.float(galaxy_snap2['Group_R_Crit200'])+np.float(galaxy_snap1['Group_R_Crit200']))/2
@@ -912,7 +910,6 @@ def analyse_gasflow(path,mcut,snapidx,nvol,ivol,snapidx_delta=1,detailed=True,du
         # part_data_candidates_snap1.loc[:,[f"runit_{x}rel" for x in 'xyz']]=np.column_stack([(part_data_candidates_snap1[f'Coordinates_{x}']-com_snap1[ix])/part_data_candidates_snap1[f'r_com'] for ix,x in enumerate('xyz')])
         # part_data_candidates_snap1.loc[:,[f"Velocity_{x}rel" for x in 'xyz']]=np.column_stack([part_data_candidates_snap1[f'Velocity_{x}']-vcom_snap1[ix] for ix,x in enumerate('xyz')])
         # part_data_candidates_snap1["vrad_inst"]=np.sum(np.multiply(np.column_stack([part_data_candidates_snap1[f"Velocity_{x}rel"] for x in 'xyz']),np.column_stack([part_data_candidates_snap1[f"runit_{x}rel"] for x in 'xyz'])),axis=1)
-        
 
         if dump and galaxy_snap2[f'ApertureMeasurements/Mass/030kpc_4']*10**10>5*10**9:
             folder=f'catalogues/galaxies/snap_{int(snapidx2)}/group_{int(groupnumber)}/subgroup_{int(subgroupnumber)}'
@@ -935,7 +932,20 @@ def analyse_gasflow(path,mcut,snapidx,nvol,ivol,snapidx_delta=1,detailed=True,du
         inside_30kpc_snap1=part_data_candidates_snap1.loc[:,"r_com"]<0.03
 
         if detailed:
-            insidebarymp_snap1=part_data_candidates_snap1.loc[:,"r_com"]<galaxy_snap2_detailed['BaryMP-radius']
+            if galaxy_snap2_detailed['BaryMP-radius-pos']==np.nan and galaxy_snap2_detailed['BaryMP-radius-neg']==np.nan:
+                barymp_rad=np.nan:
+            elif galaxy_snap2_detailed['BaryMP-radius-pos']==np.nan:
+                barymp_rad=galaxy_snap2_detailed['BaryMP-radius-neg']
+            elif galaxy_snap2_detailed['BaryMP-radius-neg']==np.nan:
+                barymp_rad=galaxy_snap2_detailed['BaryMP-radius-pos']
+            else:
+                if galaxy_snap2_detailed['BaryMP-radius-pos']<galaxy_snap2_detailed['BaryMP-radius-neg']:
+                    barymp_rad=galaxy_snap2_detailed['BaryMP-radius-pos']
+                else:
+                    barymp_rad=galaxy_snap2_detailed['BaryMP-radius-neg']
+
+        if detailed:
+            insidebarymp_snap1=part_data_candidates_snap1.loc[:,"r_com"]<barymp_rad
 
         #masks snap 2
         subgroup_snap2=part_data_candidates_snap2["SubGroupNumber"].values==subgroupnumber
@@ -943,7 +953,7 @@ def analyse_gasflow(path,mcut,snapidx,nvol,ivol,snapidx_delta=1,detailed=True,du
         inside_30kpc_snap2=part_data_candidates_snap2.loc[:,"r_com"]<0.03
 
         if detailed:
-            insidebarymp_snap2=part_data_candidates_snap2.loc[:,"r_com"]<galaxy_snap2_detailed['BaryMP-radius']
+            insidebarymp_snap2=part_data_candidates_snap2.loc[:,"r_com"]<barymp_rad
 
         ism_30kpc_snap1=np.logical_and.reduce([subgroup_snap1,tempreq_snap1,inside_30kpc_snap1])
         ism_30kpc_snap2=np.logical_and.reduce([subgroup_snap2,tempreq_snap2,inside_30kpc_snap2])
