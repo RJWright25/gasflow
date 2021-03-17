@@ -604,7 +604,6 @@ def analyse_subhalo(path,mcut,snapidx,nvol,ivol):
                 barymp,nfit=BaryMP(r200_bins_mid[::-1],mass_binned_cumulative[::-1])
                 nfit=-nfit
             except:
-                print('Could not fit galaxy')
                 success.append(0)
                 barymp,nfit=np.nan,0
                 continue
@@ -614,7 +613,6 @@ def analyse_subhalo(path,mcut,snapidx,nvol,ivol):
                 barymp,nfit=BaryMP(r200_bins_mid[::-1],mass_binned_cumulative[::-1])
                 nfit=-nfit
             except:
-                print('Could not fit galaxy')
                 success.append(0)
                 barymp,nfit=np.nan,0
                 continue
@@ -626,8 +624,6 @@ def analyse_subhalo(path,mcut,snapidx,nvol,ivol):
         output_df.loc[igalaxy,'BaryMP-factor']=barymp
         output_df.loc[igalaxy,'BaryMP-mstar']=barymp_mstar
         output_df.loc[igalaxy,'BaryMP-nfit']=nfit
-
-        print(barymp,nfit,barymp_rad,barymp_mstar)
         
         if icen:
             logging.info(f'Done with galaxy {iigalaxy+1} of {numgal_subvolume} for this subvolume - CENTRAL [runtime = {time.time()-t0:.2f}s]')
