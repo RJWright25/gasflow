@@ -592,6 +592,8 @@ def analyse_subhalo(path,mcut,snapidx,nvol,ivol):
         mass_binned_cumulative=[np.nansum(mass[np.where(mask)]) for mask in masks]
         mass_binned_cumulative=mass_binned_cumulative/mass_binned_cumulative[-1]
 
+        print(mass_binned_cumulative)
+
         try:
             barymp,nfit=BaryMP(r200_bins_mid[::-1],mass_binned_cumulative[::-1])
         except:
