@@ -588,10 +588,10 @@ def analyse_subhalo(path,mcut,snapidx,nvol,ivol):
         r200_bins_mid=r200_bins[1:]
 
         part_data_selection=part_data_candidates.loc[np.logical_and(part_data_candidates["rrel_com"]<1,part_data_candidates["SubGroupNumber"]==0),:]
-        print(part_data_selection.shape)
 
         rrel=part_data_selection["rrel_com"].values
         mass=part_data_selection["Mass"].values
+        print(len(rrel))
 
         masks=[rrel<bin_hi for bin_lo, bin_hi in zip(r200_bins[:-1],r200_bins[1:])]
         mass_binned_cumulative=[np.nansum(mass[np.where(mask)]) for mask in masks]
