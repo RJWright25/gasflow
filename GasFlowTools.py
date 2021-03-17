@@ -584,14 +584,13 @@ def analyse_subhalo(path,mcut,snapidx,nvol,ivol):
         part_data_candidates.loc[:,"rrel_com"]=np.sqrt(np.sum(np.square(np.column_stack([part_data_candidates[f'Coordinates_{x}']-com[ix] for ix,x in enumerate('xyz')])),axis=1))/r200_eff #Mpc
 
         #fit baryon mass profile
-        r200_bins=np.linspace(0,1,200)
+        r200_bins=np.linspace(0,1,101)
         r200_bins_mid=r200_bins[1:]
 
         part_data_selection=part_data_candidates.loc[np.logical_and(part_data_candidates["rrel_com"]<1,part_data_candidates["SubGroupNumber"]==0),:]
 
         rrel=part_data_selection["rrel_com"].values
         mass=part_data_selection["Mass"].values
-        print(len(rrel))
 
         masks=[rrel<bin_hi for bin_lo, bin_hi in zip(r200_bins[:-1],r200_bins[1:])]
         mass_binned_cumulative=[np.nansum(mass[np.where(mask)]) for mask in masks]
