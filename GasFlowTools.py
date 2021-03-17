@@ -592,8 +592,13 @@ def analyse_subhalo(path,mcut,snapidx,nvol,ivol):
         mass_binned_cumulative=[np.nansum(mass[np.where(mask)]) for mask in masks]
         mass_binned_cumulative=mass_binned_cumulative/mass_binned_cumulative[-1]
 
-        barymp,nfit=BaryMP(r200_bins_mid[::-1],mass_binned_cumulative[::-1])
-
+        try:
+            barymp,nfit=BaryMP(r200_bins_mid[::-1],mass_binned_cumulative[::-1])
+        except:
+            print('Could not fit galaxy')
+            success.append(0)
+            barymp,nfit=np.nan,0
+        
         barymp_rad=barymp*r200_eff
         barymp_mstar=np.nansum(part_data_candidates_sg.loc[np.logical_and(rrel<barymp,part_data_candidates_sg.loc[:,"ParticleTypes"]==4),"Mass"])
 
