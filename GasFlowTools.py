@@ -1013,6 +1013,7 @@ def analyse_gasflow(path,mcut,snapidx,nvol,ivol,snapidx_delta=1,detailed=True,du
 
         logging.info(f'')
         success.append(1)
+        print(gasflow_df.loc[igalaxy_snap2,:])
 
     logging.info(f'{np.sum(success):.0f} of {len(success):.0f} galaxies were successfully processed ({np.nanmean(success)*100:.1f}%) [runtime = {time.time()-t0:.2f}s]')
     gasflow_df.to_hdf(output_fname,key='Flux')
